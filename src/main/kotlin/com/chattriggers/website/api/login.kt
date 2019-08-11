@@ -33,6 +33,7 @@ private fun login(ctx: Context) {
     if (BCrypt.checkpw(password, hashedPw)) {
         // User correctly authenticated.
         ctx.sessionAttribute("user", dbUser)
+        ctx.sessionAttribute("role", dbUser.rank)
 
         ctx.status(200).result("Authenticated!")
     } else {

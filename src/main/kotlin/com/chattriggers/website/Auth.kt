@@ -1,6 +1,5 @@
 package com.chattriggers.website
 
-import com.chattriggers.website.data.User
 import io.javalin.core.JavalinConfig
 import io.javalin.core.security.Role
 import io.javalin.core.security.SecurityUtil.roles
@@ -25,9 +24,7 @@ object Auth {
     }
 
     private fun getRoleForContext(ctx: Context): Roles {
-        val user = ctx.sessionAttribute<User>("user") ?: return Roles.default
-
-        return user.rank
+        return ctx.sessionAttribute<Roles>("role") ?: return Roles.default
     }
 
     enum class Roles : Role {

@@ -20,4 +20,15 @@ class User(id: EntityID<Int>) : IntEntity(id) {
     val email by Users.email
     val password by Users.password
     val rank by Users.rank
+    val modules by Module referrersOn Modules.owner
+
+    override fun equals(other: Any?): Boolean {
+        if (other == null || other !is User) return false
+
+        return other.name == this.name && other.email == this.email
+    }
+
+    fun public() = PublicUser(id.value, name)
 }
+
+data class PublicUser(val id: Int, val name: String)

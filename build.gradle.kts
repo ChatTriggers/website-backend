@@ -21,6 +21,7 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:1.7.26")
     implementation("org.jetbrains.exposed:exposed:0.16.3")
     implementation("org.mindrot:jbcrypt:0.4")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.9.9")
 }
 
 tasks.withType<KotlinCompile> {
