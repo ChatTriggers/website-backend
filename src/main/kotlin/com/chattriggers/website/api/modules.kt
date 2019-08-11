@@ -36,8 +36,6 @@ class ModuleController : CrudHandler {
         val offset = ctx.queryParam<Int>("offset", "0").get()
 
         val modulesResponse = transaction {
-            val total = Module.count()
-
             var modifiers: Op<Boolean> = Op.TRUE
 
             ctx.queryParam<Int>("owner").getOrNull()?.let {
@@ -53,6 +51,8 @@ class ModuleController : CrudHandler {
             }
 
             val preSorted = Module.wrapRows(Modules.innerJoin(Users).slice(Modules.columns).select(modifiers))
+
+            val total = preSorted.count()
 
             val modules = preSorted.orderBy(Modules.createdAt to SortOrder.DESC).limit(limit, offset).map(Module::public)
 
