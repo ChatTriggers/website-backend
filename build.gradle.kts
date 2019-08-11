@@ -17,6 +17,10 @@ dependencies {
     implementation("io.javalin:javalin:3.3.0")
     implementation("com.zaxxer:HikariCP:3.3.1")
     implementation("org.koin:koin-core:2.0.1")
+    implementation("mysql:mysql-connector-java:8.0.17")
+    implementation("org.slf4j:slf4j-simple:1.7.26")
+    implementation("org.jetbrains.exposed:exposed:0.16.3")
+    implementation("org.mindrot:jbcrypt:0.4")
 }
 
 tasks.withType<KotlinCompile> {

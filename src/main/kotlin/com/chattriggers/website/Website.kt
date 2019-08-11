@@ -1,6 +1,8 @@
 package com.chattriggers.website
 
+import com.chattriggers.website.api.makeApiRoutes
 import com.chattriggers.website.config.Config
+import com.chattriggers.website.data.DB
 import io.javalin.Javalin
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
@@ -10,17 +12,16 @@ val configModule = module {
 }
 
 fun main() {
+    startKoin {
+        modules(listOf(configModule))
+    }
+
+    DB.setupDB()
+
     val app = Javalin.create {
-        Sessions.configureJavalin(it)
+        Sessions.configure(it)
+        Auth.configure(it)
     }.start(7000)
 
-    val mainModule = module {
-        single { app }
-    }
-
-    startKoin {
-        modules(listOf(configModule, mainModule))
-    }
-
-
+    makeApiRoutes(app)
 }

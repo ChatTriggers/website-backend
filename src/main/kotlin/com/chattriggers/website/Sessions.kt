@@ -10,7 +10,7 @@ import org.koin.core.KoinComponent
 import org.koin.core.get
 
 object Sessions : KoinComponent {
-    fun sqlSessionHandler() = SessionHandler().apply {
+    private fun sqlSessionHandler() = SessionHandler().apply {
         val dbConfig = get<DbConfig>()
 
         sessionCache = DefaultSessionCache(this).apply {
@@ -24,7 +24,7 @@ object Sessions : KoinComponent {
         httpOnly = true
     }
 
-    fun configureJavalin(config: JavalinConfig) {
+    fun configure(config: JavalinConfig) {
         config.sessionHandler { sqlSessionHandler() }
     }
 }
