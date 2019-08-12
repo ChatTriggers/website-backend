@@ -9,13 +9,9 @@ import com.chattriggers.website.data.User
 import com.chattriggers.website.data.Users
 import io.javalin.apibuilder.ApiBuilder.crud
 import io.javalin.apibuilder.CrudHandler
-import io.javalin.http.BadRequestResponse
-import io.javalin.http.Context
+import io.javalin.http.*
 import org.jetbrains.exposed.dao.load
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 
@@ -24,27 +20,49 @@ fun moduleRoutes() {
 }
 
 class ModuleController : CrudHandler {
-    val imgurRegex = """^https?:\/\/(\w+\.)?imgur.com\/[a-zA-Z0-9]{7}\.[a-zA-Z0-9]+${'$'}""".toRegex()
+    private val imgurRegex = """^https?:\/\/(\w+\.)?imgur.com\/[a-zA-Z0-9]{7}\.[a-zA-Z0-9]+${'$'}""".toRegex()
 
     override fun create(ctx: Context) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val currentUser = ctx.sessionAttribute<User>("user") ?: throw UnauthorizedResponse("Not logged in!")
+
+        voidTransaction {
+            val newName = formParamOrFail(ctx, "name")
+            val existing = Module.find { Modules.name eq newName }
+
+            if (!existing.empty()) throw ConflictResponse("Module with name '$newName' already exists!")
+
+            // TODO, file saving.
+
+            val module = Module.new {
+                owner = currentUser
+                name = newName
+                description = formParamOrFail(ctx, "description")
+                image = ctx.formParam("image")
+                downloads = 0
+                hidden = false
+                createdAt = DateTime.now()
+                updatedAt = DateTime.now()
+            }
+
+            ctx.status(201).json(module.public())
+        }
     }
 
-    override fun delete(ctx: Context, resourceId: String) = transaction {
+    private fun formParamOrFail(ctx: Context, param: String): String {
+        return ctx.formParam(param) ?: throw BadRequestResponse("'$param' parameter missing.")
+    }
+
+    override fun delete(ctx: Context, resourceId: String) = voidTransaction {
         val user = ctx.sessionAttribute<User>("user")
         val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
 
-        val module = getModuleOrFail(ctx, resourceId, user, access) ?: return@transaction
+        val module = getModuleOrFail(resourceId, user, access)
 
-        if (module.owner != user && access != Auth.Roles.default) {
-            ctx.status(403).result("Can't delete this module.")
-        }
+        if (module.owner != user && access == Auth.Roles.default) throw ForbiddenResponse("Can't delete this module.")
 
         module.delete()
 
         ctx.status(200).result("Successfully deleted module.")
-
-        return@transaction
     }
 
     override fun getAll(ctx: Context) {
@@ -84,25 +102,23 @@ class ModuleController : CrudHandler {
         ctx.status(200).json(modulesResponse)
     }
 
-    override fun getOne(ctx: Context, resourceId: String) = transaction {
+    override fun getOne(ctx: Context, resourceId: String) = voidTransaction {
         val user = ctx.sessionAttribute<User>("user")
         val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
 
-        val module = getModuleOrFail(ctx, resourceId, user, access) ?: return@transaction
+        val module = getModuleOrFail(resourceId, user, access)
 
         ctx.status(200).json(module.public())
-
-        return@transaction
     }
 
-    override fun update(ctx: Context, resourceId: String) = transaction {
+    override fun update(ctx: Context, resourceId: String) = voidTransaction {
         val user = ctx.sessionAttribute<User>("user")
         val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
 
-        val module = getModuleOrFail(ctx, resourceId, user, access) ?: return@transaction
+        val module = getModuleOrFail(resourceId, user, access)
 
-        if (module.owner != user && access != Auth.Roles.default) {
-            ctx.status(403).result("Can't edit this module.")
+        if (module.owner != user && access == Auth.Roles.default) {
+            throw ForbiddenResponse("Can't edit this module.")
         }
 
         ctx.formParam("description")?.let {
@@ -128,30 +144,19 @@ class ModuleController : CrudHandler {
         module.updatedAt = DateTime.now()
 
         ctx.status(200).result("Successfully updated module.")
-
-        return@transaction
     }
 
-    private fun getModuleOrFail(ctx: Context, resourceId: String, user: User?, access: Auth.Roles): Module? {
-        val moduleId = resourceId.toIntOrNull()
+    private fun getModuleOrFail(resourceId: String, user: User?, access: Auth.Roles): Module {
+        val moduleId = resourceId.toIntOrNull() ?: throw BadRequestResponse("Module ID must be an integer.")
 
-        if (moduleId == null) {
-            ctx.status(400).result("Module ID must be an integer.")
-            return null
-        }
-
-        val module = Module.findById(moduleId)?.load(Module::owner)
-
-        if (module == null) {
-            ctx.status(404).result("Module does not exist.")
-            return null
-        }
+        val module = Module.findById(moduleId)?.load(Module::owner) ?: throw NotFoundResponse("Module does not exist.")
 
         if (module.hidden && access == Auth.Roles.default && module.owner != user) {
-            ctx.status(404).result("Module does not exist.")
-            return null
+            throw NotFoundResponse("Module does not exist.")
         }
 
         return module
     }
+
+    private fun voidTransaction(code: Transaction.() -> Unit) = transaction { this.code() }
 }

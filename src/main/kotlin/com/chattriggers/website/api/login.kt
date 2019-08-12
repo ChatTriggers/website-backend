@@ -1,27 +1,67 @@
 package com.chattriggers.website.api
 
+import com.chattriggers.website.Auth
+import com.chattriggers.website.api.responses.FailureResponses
 import com.chattriggers.website.data.User
 import com.chattriggers.website.data.Users
 import io.javalin.apibuilder.ApiBuilder.path
 import io.javalin.apibuilder.ApiBuilder.post
+import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
 import org.mindrot.jbcrypt.BCrypt
 
 fun loginRoutes() {
     path("account") {
         post("login", ::login)
         post("new", ::new)
+        post("logout", ::logout)
     }
 }
 
 private fun new(ctx: Context) {
+    if (ctx.sessionAttribute<User>("user") != null) FailureResponses.ALREADY_LOGGED_IN.throwResponse()
 
+    transaction {
+        val newName = formParamOrFail(ctx, "name")
+        val newEmail = formParamOrFail(ctx, "email")
+
+        var existing = User.find { Users.email eq newEmail }
+
+        if (!existing.empty()) FailureResponses.EMAIL_IN_USE.throwResponse()
+
+        existing = User.find { Users.name eq newName }
+
+        if (!existing.empty()) FailureResponses.NAME_IN_USE.throwResponse()
+
+        User.new {
+            name = newName
+            email = newEmail
+            password = BCrypt.hashpw(formParamOrFail(ctx, "password"), BCrypt.gensalt())
+            rank = Auth.Roles.default
+            createdAt = DateTime.now()
+            updatedAt = DateTime.now()
+        }
+
+        ctx.status(201).result("User created!")
+    }
+}
+
+private fun logout(ctx: Context) {
+    ctx.req.session.invalidate()
+
+    ctx.status(200).result("Logged out!")
 }
 
 private fun login(ctx: Context) {
-    val username = ctx.queryParam<String>("username").getOrNull() ?: return ctx.loginFail()
-    val password = ctx.queryParam<String>("password").getOrNull() ?: return ctx.loginFail()
+    if (ctx.sessionAttribute<User>("user") != null) {
+        ctx.status(200).result("Already logged in!")
+        return
+    }
+
+    val username = formParamOrFail(ctx, "username")
+    val password = formParamOrFail(ctx, "password")
 
     val dbUser = transaction {
         User.find { Users.name eq username }.firstOrNull()
@@ -31,11 +71,13 @@ private fun login(ctx: Context) {
     val hashedPw = dbUser.password.replace("$2y$", "$2a$")
 
     if (BCrypt.checkpw(password, hashedPw)) {
+        ctx.req.changeSessionId()
+
         // User correctly authenticated.
         ctx.sessionAttribute("user", dbUser)
         ctx.sessionAttribute("role", dbUser.rank)
 
-        ctx.status(200).result("Authenticated!")
+        ctx.status(200).json(dbUser.public())
     } else {
         return ctx.loginFail()
     }
@@ -43,4 +85,8 @@ private fun login(ctx: Context) {
 
 private fun Context.loginFail() {
     status(401).result("Authentication Failed.")
+}
+
+private fun formParamOrFail(ctx: Context, param: String): String {
+    return ctx.formParam(param) ?: throw BadRequestResponse("'$param' parameter missing.")
 }

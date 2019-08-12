@@ -19,13 +19,13 @@ object Modules : IntIdTable() {
 class Module(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<Module>(Modules)
 
-    val owner by User referencedOn Modules.owner
-    val name by Modules.name
+    var owner by User referencedOn Modules.owner
+    var name by Modules.name
     var description by Modules.description
     var image by Modules.image
     var downloads by Modules.downloads
     var hidden by Modules.hidden
-    val createdAt by Modules.createdAt
+    var createdAt by Modules.createdAt
     var updatedAt by Modules.updatedAt
 
     fun public() = PublicModule(
