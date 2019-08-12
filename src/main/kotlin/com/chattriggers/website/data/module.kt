@@ -21,12 +21,12 @@ class Module(id: EntityID<Int>) : IntEntity(id) {
 
     val owner by User referencedOn Modules.owner
     val name by Modules.name
-    val description by Modules.description
-    val image by Modules.image
-    val downloads by Modules.downloads
-    val hidden by Modules.hidden
+    var description by Modules.description
+    var image by Modules.image
+    var downloads by Modules.downloads
+    var hidden by Modules.hidden
     val createdAt by Modules.createdAt
-    val updatedAt by Modules.updatedAt
+    var updatedAt by Modules.updatedAt
 
     fun public() = PublicModule(
         id.value,
