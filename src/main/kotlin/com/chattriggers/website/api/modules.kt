@@ -131,7 +131,7 @@ class ModuleController : CrudHandler {
             module.image = it
         }
 
-        ctx.formParam("hidden")?.let {
+        ctx.formParam("flagged")?.let {
             when (it) {
                 "true" -> module.hidden = true
                 "false" -> module.hidden = false

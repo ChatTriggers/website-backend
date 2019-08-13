@@ -4,10 +4,10 @@ import com.chattriggers.website.Auth
 import com.chattriggers.website.api.responses.FailureResponses
 import com.chattriggers.website.data.User
 import com.chattriggers.website.data.Users
-import io.javalin.apibuilder.ApiBuilder.path
-import io.javalin.apibuilder.ApiBuilder.post
+import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
+import io.javalin.http.NotFoundResponse
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.mindrot.jbcrypt.BCrypt
@@ -16,7 +16,8 @@ fun loginRoutes() {
     path("account") {
         post("login", ::login)
         post("new", ::new)
-        post("logout", ::logout)
+        get("logout", ::logout)
+        get("current", ::current)
     }
 }
 
@@ -56,7 +57,7 @@ private fun logout(ctx: Context) {
 
 private fun login(ctx: Context) {
     if (ctx.sessionAttribute<User>("user") != null) {
-        ctx.status(200).result("Already logged in!")
+        ctx.status(200).json(ctx.sessionAttribute<User>("user")!!)
         return
     }
 
@@ -81,6 +82,12 @@ private fun login(ctx: Context) {
     } else {
         return ctx.loginFail()
     }
+}
+
+private fun current(ctx: Context) {
+    val user = ctx.sessionAttribute<User>("user") ?: throw NotFoundResponse("No active user.")
+
+    ctx.status(200).json(user.public())
 }
 
 private fun Context.loginFail() {
