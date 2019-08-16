@@ -33,6 +33,10 @@ class User(id: EntityID<Int>) : IntEntity(id) {
     }
 
     fun public() = PublicUser(id.value, name, rank)
+
+    fun personal() = PersonalPublicUser(id.value, name, rank, email)
 }
 
 data class PublicUser(val id: Int, val name: String, val rank: Auth.Roles)
+
+data class PersonalPublicUser(val id: Int, val name: String, val rank: Auth.Roles, val email: String)

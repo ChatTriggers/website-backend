@@ -87,7 +87,7 @@ private fun login(ctx: Context) {
 private fun current(ctx: Context) {
     val user = ctx.sessionAttribute<User>("user") ?: throw NotFoundResponse("No active user.")
 
-    ctx.status(200).json(user.public())
+    ctx.status(200).json(user.personal())
 }
 
 private fun Context.loginFail() {
