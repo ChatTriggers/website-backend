@@ -71,10 +71,10 @@ class ModuleController : CrudHandler {
     override fun getAll(ctx: Context) {
         val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
 
-        val limit = ctx.queryParam<Int>("limit", "10").get()
-        val offset = ctx.queryParam<Int>("offset", "0").get()
-
         val modulesResponse = transaction {
+            val limit = ctx.queryParam<Int>("limit", "10").get()
+            val offset = ctx.queryParam<Int>("offset", "0").get()
+
             var modifiers: Op<Boolean> = Op.TRUE
 
             ctx.queryParam<Int>("owner").getOrNull()?.let {
@@ -83,6 +83,13 @@ class ModuleController : CrudHandler {
 
             ctx.queryParam<Boolean>("trusted").getOrNull()?.let {
                 modifiers = modifiers and Op.build { Users.rank neq Auth.Roles.default }
+            }
+
+            ctx.queryParam("q")?.let {
+                // TODO: Search tags
+                modifiers = modifiers and Op.build {
+                    (Users.name like "%$it%") or (toSQLList(Modules.name, Modules.description) match it)
+                }
             }
 
             if (access != Auth.Roles.default) {
@@ -178,6 +185,15 @@ class ModuleController : CrudHandler {
 
         FileSystems.newFileSystem(zipToSave.toPath(), null).use {
             Files.copy(it.getPath("metadata.json"), metadataToSave.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
+
+    private fun <T> toSQLList(first: ExpressionWithColumnType<T>, vararg exprs: ExpressionWithColumnType<T>) = object : ExpressionWithColumnType<T>() {
+        override val columnType: IColumnType
+            get() = first.columnType
+
+        override fun toSQL(queryBuilder: QueryBuilder): String {
+            return "${first.toSQL(queryBuilder)},${exprs.joinToString(separator = ",") { it.toSQL(queryBuilder) }}"
         }
     }
 }
