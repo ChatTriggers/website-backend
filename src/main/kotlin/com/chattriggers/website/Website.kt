@@ -24,6 +24,7 @@ fun main() {
         Auth.configure(it)
 
         it.addStaticFiles("static/", Location.EXTERNAL)
+        it.enableCorsForAllOrigins()
     }.start(7000)
 
     makeApiRoutes(app)
