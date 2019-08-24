@@ -1,7 +1,6 @@
-package com.chattriggers.website
+package com.chattriggers.website.api
 
-import com.chattriggers.website.api.METADATA_NAME
-import com.chattriggers.website.api.SCRIPTS_NAME
+import com.chattriggers.website.Auth
 import com.chattriggers.website.api.responses.ModuleMeta
 import com.chattriggers.website.api.responses.ModuleResponse
 import com.chattriggers.website.data.Module
@@ -62,6 +61,9 @@ class ModuleController : CrudHandler {
         val module = getModuleOrFail(resourceId, user, access)
 
         if (module.owner != user && access == Auth.Roles.default) throw ForbiddenResponse("Can't delete this module.")
+
+        val folder = File("storage/${module.name.toLowerCase()}")
+        folder.delete()
 
         module.delete()
 
@@ -148,8 +150,6 @@ class ModuleController : CrudHandler {
                 else -> throw BadRequestResponse("'hidden' has to be a boolean")
             }
         }
-
-        ctx.uploadedFile("module")?.saveToZip(module.name)
 
         module.updatedAt = DateTime.now()
 

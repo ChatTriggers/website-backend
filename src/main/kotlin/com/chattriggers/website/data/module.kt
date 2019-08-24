@@ -27,6 +27,7 @@ class Module(id: EntityID<Int>) : IntEntity(id) {
     var hidden by Modules.hidden
     var createdAt by Modules.createdAt
     var updatedAt by Modules.updatedAt
+    val releases by Release referrersOn Releases.module
 
     fun public() = PublicModule(
         id.value,
