@@ -14,6 +14,9 @@ object Sessions : KoinComponent {
         val dbConfig = get<DbConfig>()
 
         sessionCache = DefaultSessionCache(this).apply {
+            evictionPolicy = 60 * 60 * 24
+            maxInactiveInterval = 60 * 60 * 24 * 7
+
             sessionDataStore = JDBCSessionDataStoreFactory().apply {
                 setDatabaseAdaptor(DatabaseAdaptor().apply {
                     datasource = dbConfig.dataSource
