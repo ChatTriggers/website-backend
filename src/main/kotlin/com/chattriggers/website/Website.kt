@@ -8,6 +8,8 @@ import io.javalin.http.staticfiles.Location
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
+// Where all of our configuration is managed.
+// Making this injected allows for testing with fake db configurations.
 val configModule = module {
     single { Config.db }
 }
@@ -24,6 +26,7 @@ fun main() {
         Auth.configure(it)
 
         it.addStaticFiles("static/", Location.EXTERNAL)
+
         it.enableCorsForAllOrigins()
     }.start(7000)
 

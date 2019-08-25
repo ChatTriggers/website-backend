@@ -9,6 +9,7 @@ import io.javalin.http.Context
 import io.javalin.http.NotFoundResponse
 import org.jetbrains.exposed.sql.lowerCase
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
 import java.io.File
 
 const val METADATA_NAME = "metadata.json"
@@ -33,13 +34,13 @@ fun getMetadata(ctx: Context) {
 }
 
 fun getScripts(ctx: Context) {
-    val releaseFolder = getReleaseFolder(ctx) ?: throw NotFoundResponse("No release applicable for specified mod version.")
+    val releaseFolder = getReleaseFolder(ctx, incrementDownloads = true) ?: throw NotFoundResponse("No release applicable for specified mod version.")
     val file = File(releaseFolder, SCRIPTS_NAME)
 
     ctx.status(200).contentType("application/zip").result(file.inputStream())
 }
 
-fun getReleaseFolder(ctx: Context) = transaction {
+fun getReleaseFolder(ctx: Context, incrementDownloads: Boolean = false) = transaction {
     val moduleName = ctx.pathParam("module-name").toLowerCase()
 
     val module = Module.find { Modules.name.lowerCase() eq moduleName }
@@ -50,7 +51,19 @@ fun getReleaseFolder(ctx: Context) = transaction {
     try {
         val release = getReleaseForModVersion(module, modVersion) ?: return@transaction null
 
-        File("storage/$moduleName/${release.id.value}")
+        val folder = File("storage/$moduleName/${release.id.value}")
+
+        if (!folder.exists()) return@transaction null
+
+        if (incrementDownloads) {
+            module.downloads++
+            module.updatedAt = DateTime.now()
+
+            release.downloads++
+            release.updatedAt = DateTime.now()
+        }
+
+        return@transaction folder
     } catch (e: Exception) {
         throw BadRequestResponse("Invalid query.")
     }

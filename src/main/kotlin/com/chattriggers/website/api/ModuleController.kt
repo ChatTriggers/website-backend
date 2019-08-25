@@ -9,15 +9,10 @@ import com.chattriggers.website.data.User
 import com.chattriggers.website.data.Users
 import io.javalin.apibuilder.CrudHandler
 import io.javalin.http.*
-import org.jetbrains.exposed.dao.load
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import java.io.File
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
-import java.util.zip.ZipFile
 
 class ModuleController : CrudHandler {
     private val imgurRegex = """^https?:\/\/(\w+\.)?imgur.com\/[a-zA-Z0-9]{7}\.[a-zA-Z0-9]+${'$'}""".toRegex()
@@ -31,8 +26,6 @@ class ModuleController : CrudHandler {
 
             if (!existing.empty()) throw ConflictResponse("Module with name '$newName' already exists!")
 
-            val uploaded = ctx.uploadedFile("module") ?: throw BadRequestResponse("Missing module file!")
-
             val module = Module.new {
                 owner = currentUser
                 name = newName
@@ -44,14 +37,8 @@ class ModuleController : CrudHandler {
                 updatedAt = DateTime.now()
             }
 
-            uploaded.saveToZip(newName)
-
             ctx.status(201).json(module.public())
         }
-    }
-
-    private fun formParamOrFail(ctx: Context, param: String): String {
-        return ctx.formParam(param) ?: throw BadRequestResponse("'$param' parameter missing.")
     }
 
     override fun delete(ctx: Context, resourceId: String) = voidTransaction {
@@ -154,38 +141,6 @@ class ModuleController : CrudHandler {
         module.updatedAt = DateTime.now()
 
         ctx.status(200).result("Successfully updated module.")
-    }
-
-    private fun getModuleOrFail(resourceId: String, user: User?, access: Auth.Roles): Module {
-        val moduleId = resourceId.toIntOrNull() ?: throw BadRequestResponse("Module ID must be an integer.")
-
-        val module = Module.findById(moduleId)?.load(Module::owner) ?: throw NotFoundResponse("Module does not exist.")
-
-        if (module.hidden && access == Auth.Roles.default && module.owner != user) {
-            throw NotFoundResponse("Module does not exist.")
-        }
-
-        return module
-    }
-
-    private fun voidTransaction(code: Transaction.() -> Unit) = transaction { this.code() }
-
-    private fun UploadedFile.saveToZip(moduleName: String) {
-        val zipToSave = File("storage/${moduleName.toLowerCase()}/$SCRIPTS_NAME")
-        zipToSave.mkdirs()
-        zipToSave.writeBytes(this.content.readBytes())
-
-        try {
-            ZipFile(zipToSave).close()
-        } catch (e: Exception) {
-            throw BadRequestResponse("Module is not a valid zip!")
-        }
-
-        val metadataToSave = File("storage/${moduleName.toLowerCase()}/$METADATA_NAME")
-
-        FileSystems.newFileSystem(zipToSave.toPath(), null).use {
-            Files.copy(it.getPath("metadata.json"), metadataToSave.toPath(), StandardCopyOption.REPLACE_EXISTING)
-        }
     }
 
     private fun <T> toSQLList(first: ExpressionWithColumnType<T>, vararg exprs: ExpressionWithColumnType<T>) = object : ExpressionWithColumnType<T>() {

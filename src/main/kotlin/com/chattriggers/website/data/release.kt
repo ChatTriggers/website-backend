@@ -19,11 +19,21 @@ object Releases : UUIDTable() {
 class Release(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<Release>(Releases)
 
-    val module by Module referencedOn Releases.module
-    val releaseVersion by Releases.releaseVersion
-    val modVersion by Releases.modVersion
-    val changelog by Releases.changelog
-    val downloads by Releases.downloads
-    val createdAt by Releases.createdAt
-    val updatedAt by Releases.updatedAt
+    var module by Module referencedOn Releases.module
+    var releaseVersion by Releases.releaseVersion
+    var modVersion by Releases.modVersion
+    var changelog by Releases.changelog
+    var downloads by Releases.downloads
+    var createdAt by Releases.createdAt
+    var updatedAt by Releases.updatedAt
+
+    fun public() = PublicRelease(id.value, releaseVersion, modVersion, changelog, downloads)
 }
+
+data class PublicRelease(
+    val id: UUID,
+    val releaseVersion: String,
+    val modVersion: String,
+    val changelog: String,
+    val downloads: Int
+)

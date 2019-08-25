@@ -5,7 +5,6 @@ import com.chattriggers.website.api.responses.FailureResponses
 import com.chattriggers.website.data.User
 import com.chattriggers.website.data.Users
 import io.javalin.apibuilder.ApiBuilder.*
-import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import io.javalin.http.NotFoundResponse
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -92,8 +91,4 @@ private fun current(ctx: Context) {
 
 private fun Context.loginFail() {
     status(401).result("Authentication Failed.")
-}
-
-private fun formParamOrFail(ctx: Context, param: String): String {
-    return ctx.formParam(param) ?: throw BadRequestResponse("'$param' parameter missing.")
 }

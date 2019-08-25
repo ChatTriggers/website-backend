@@ -8,6 +8,7 @@ import io.javalin.http.Context
 object Auth {
     fun configure(config: JavalinConfig) {
         config.accessManager { handler, ctx, permittedRoles ->
+            // If a route doesn't specify what roles can access it, assume everyone can.
             if (permittedRoles.isEmpty()) {
                 handler.handle(ctx)
                 return@accessManager

@@ -7,8 +7,11 @@ fun makeApiRoutes(app: Javalin) {
     app.routes {
         path("api") {
             loginRoutes()
-            moduleRoutes()
+
             userRoutes()
+
+            moduleRoutes()
+            releaseRoutes()
         }
     }
 }

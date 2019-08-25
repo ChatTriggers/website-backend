@@ -14,8 +14,8 @@ object Sessions : KoinComponent {
         val dbConfig = get<DbConfig>()
 
         sessionCache = DefaultSessionCache(this).apply {
+            // Evict sessions after a week no matter what.
             evictionPolicy = 60 * 60 * 24
-            maxInactiveInterval = 60 * 60 * 24 * 7
 
             sessionDataStore = JDBCSessionDataStoreFactory().apply {
                 setDatabaseAdaptor(DatabaseAdaptor().apply {
@@ -24,6 +24,9 @@ object Sessions : KoinComponent {
             }.getSessionDataStore(sessionHandler)
         }
 
+        // Evict session after a day of idling.
+        maxInactiveInterval = 60 * 60 * 24
+        // Cookie is not accessible from JS. Basic cookie-stealing security.
         httpOnly = true
     }
 
