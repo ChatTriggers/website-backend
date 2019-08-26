@@ -31,8 +31,8 @@ fun getModuleOrFail(resourceId: String, user: User?, access: Auth.Roles): Module
 fun voidTransaction(code: Transaction.() -> Unit) = transaction { this.code() }
 
 fun UploadedFile.saveModuleToFolder(folder: File) {
+    folder.mkdirs()
     val zipToSave = File(folder, SCRIPTS_NAME)
-    zipToSave.mkdirs()
     zipToSave.writeBytes(this.content.readBytes())
 
     try {
@@ -46,11 +46,20 @@ fun UploadedFile.saveModuleToFolder(folder: File) {
 
     try {
         FileSystems.newFileSystem(zipToSave.toPath(), null).use {
-            Files.copy(it.getPath("metadata.json"), metadataToSave.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            val rootFolder = Files.newDirectoryStream(it.rootDirectories.first()).iterator()
+
+            if (!rootFolder.hasNext()) throw Exception("Too small")
+
+            val moduleFolder = rootFolder.next()
+
+            if (rootFolder.hasNext()) throw Exception("Too big")
+
+            Files.copy(moduleFolder.resolve("metadata.json"), metadataToSave.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
     } catch (e: Exception) {
         zipToSave.delete()
         metadataToSave.delete()
+        e.printStackTrace()
         throw BadRequestResponse("Module missing metadata.json!")
     }
 }

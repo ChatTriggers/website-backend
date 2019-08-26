@@ -12,7 +12,6 @@ import io.javalin.http.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import java.io.File
 
 class ModuleController : CrudHandler {
     private val imgurRegex = """^https?:\/\/(\w+\.)?imgur.com\/[a-zA-Z0-9]{7}\.[a-zA-Z0-9]+${'$'}""".toRegex()
@@ -49,8 +48,7 @@ class ModuleController : CrudHandler {
 
         if (module.owner != user && access == Auth.Roles.default) throw ForbiddenResponse("Can't delete this module.")
 
-        val folder = File("storage/${module.name.toLowerCase()}")
-        folder.delete()
+        ReleaseController.deleteModule(module)
 
         module.delete()
 
@@ -140,7 +138,7 @@ class ModuleController : CrudHandler {
 
         module.updatedAt = DateTime.now()
 
-        ctx.status(200).result("Successfully updated module.")
+        ctx.status(200).json(module.public())
     }
 
     private fun <T> toSQLList(first: ExpressionWithColumnType<T>, vararg exprs: ExpressionWithColumnType<T>) = object : ExpressionWithColumnType<T>() {
