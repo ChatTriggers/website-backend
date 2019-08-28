@@ -77,10 +77,15 @@ class ModuleController : CrudHandler {
                 modifiers = modifiers and Op.build { Users.rank neq Auth.Roles.default }
             }
 
+            ctx.queryParam("tag")?.let {
+                modifiers = modifiers and Op.build { Modules.tags like "%$it%" }
+            }
+
             ctx.queryParam("q")?.let {
-                // TODO: Search tags
                 modifiers = modifiers and Op.build {
-                    (Users.name like "%$it%") or (toSQLList(Modules.name, Modules.description) match "$it*")
+                    (Users.name like "%$it%") or
+                            (toSQLList(Modules.name, Modules.description) match "$it*") or
+                            (Modules.tags like "%$it%")
                 }
             }
 
@@ -96,7 +101,9 @@ class ModuleController : CrudHandler {
 
             val total = preSorted.count()
 
-            val modules = preSorted.orderBy(Modules.createdAt to SortOrder.DESC).limit(limit, offset).map(Module::public)
+            val modules = preSorted.orderBy(Modules.createdAt to SortOrder.DESC)
+                .limit(limit, offset)
+                .map(Module::public)
 
             ModuleResponse(ModuleMeta(limit, offset, total), modules)
         }
