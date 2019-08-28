@@ -25,12 +25,17 @@ class ModuleController : CrudHandler {
 
             if (!existing.empty()) throw ConflictResponse("Module with name '$newName' already exists!")
 
+            val givenTags = ctx.formParams("tags")
+
+            if (givenTags.any { it !in allowedTags }) throw BadRequestResponse("Unapproved tag.")
+
             val module = Module.new {
                 owner = currentUser
                 name = newName
                 description = formParamOrFail(ctx, "description")
                 image = ctx.formParam("image")
                 downloads = 0
+                tags = givenTags.joinToString(separator = ",")
                 hidden = false
                 createdAt = DateTime.now()
                 updatedAt = DateTime.now()
@@ -134,6 +139,17 @@ class ModuleController : CrudHandler {
                 "false" -> module.hidden = false
                 else -> throw BadRequestResponse("'hidden' has to be a boolean")
             }
+        }
+
+        ctx.formParamMap()["tags"]?.let { givenTags ->
+            if (givenTags[0].isBlank()) {
+                module.tags = ""
+                return@let
+            }
+
+            if (givenTags.any { it !in allowedTags }) throw BadRequestResponse("Unapproved tag.")
+
+            module.tags = givenTags.joinToString(separator = ",")
         }
 
         module.updatedAt = DateTime.now()

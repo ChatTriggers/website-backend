@@ -11,6 +11,7 @@ object Modules : IntIdTable() {
     val description = text("description")
     val image = varchar("image", 50).nullable()
     val downloads = integer("downloads").default(0)
+    val tags = varchar("tags", 2000).default("")
     val hidden = bool("hidden")
     val createdAt = datetime("created_at")
     val updatedAt = datetime("updated_at")
@@ -24,6 +25,7 @@ class Module(id: EntityID<Int>) : IntEntity(id) {
     var description by Modules.description
     var image by Modules.image
     var downloads by Modules.downloads
+    var tags by Modules.tags
     var hidden by Modules.hidden
     var createdAt by Modules.createdAt
     var updatedAt by Modules.updatedAt
@@ -35,7 +37,8 @@ class Module(id: EntityID<Int>) : IntEntity(id) {
         name,
         description,
         image,
-        downloads
+        downloads,
+        tags.split(",").filter { !it.isBlank() }
     )
 }
 
@@ -45,5 +48,6 @@ data class PublicModule (
     val name: String,
     val description: String,
     val image: String?,
-    val downloads: Int
+    val downloads: Int,
+    val tags: List<String>
 )
