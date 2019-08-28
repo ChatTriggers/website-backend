@@ -75,7 +75,7 @@ class ModuleController : CrudHandler {
             ctx.queryParam("q")?.let {
                 // TODO: Search tags
                 modifiers = modifiers and Op.build {
-                    (Users.name like "%$it%") or (toSQLList(Modules.name, Modules.description) match it)
+                    (Users.name like "%$it%") or (toSQLList(Modules.name, Modules.description) match "$it*")
                 }
             }
 
