@@ -12,6 +12,7 @@ import org.koin.dsl.module
 // Making this injected allows for testing with fake db configurations.
 val configModule = module {
     single { Config.db }
+    single { Config.mail }
 }
 
 fun main() {

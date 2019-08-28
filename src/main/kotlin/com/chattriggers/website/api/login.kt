@@ -2,14 +2,21 @@ package com.chattriggers.website.api
 
 import com.chattriggers.website.Auth
 import com.chattriggers.website.api.responses.FailureResponses
+import com.chattriggers.website.data.Emails
+import com.chattriggers.website.data.PasswordResets
 import com.chattriggers.website.data.User
 import com.chattriggers.website.data.Users
 import io.javalin.apibuilder.ApiBuilder.*
+import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import io.javalin.http.NotFoundResponse
+import io.javalin.http.UnauthorizedResponse
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.mindrot.jbcrypt.BCrypt
+import java.util.*
 
 fun loginRoutes() {
     path("account") {
@@ -17,6 +24,11 @@ fun loginRoutes() {
         post("new", ::new)
         get("logout", ::logout)
         get("current", ::current)
+
+        path("reset") {
+            get("request", ::requestReset)
+            post("complete", ::completeReset)
+        }
     }
 }
 
@@ -81,6 +93,56 @@ private fun login(ctx: Context) {
     } else {
         return ctx.loginFail()
     }
+}
+
+private fun requestReset(ctx: Context) = voidTransaction {
+    if (ctx.sessionAttribute<User>("user") != null) {
+        throw UnauthorizedResponse("Already logged in!")
+    }
+
+    val email = formParamOrFail(ctx, "email")
+
+    val user = User.find { Users.email eq email }.firstOrNull()
+
+    if (user == null) {
+        ctx.status(200).result("If there is an account associated with that email, a password reset link has been sent!")
+    }
+
+    val randToken = UUID.randomUUID().toString()
+
+    PasswordResets.insert {
+        it[this.email] = email
+        it[this.token] = randToken
+        it[this.expiration] = DateTime.now().plusMinutes(30)
+    }
+
+    // Send email
+    Emails.sendPasswordReset(email, randToken)
+}
+
+private fun completeReset(ctx: Context) = voidTransaction {
+    if (ctx.sessionAttribute<User>("user") != null) {
+        throw UnauthorizedResponse("Already logged in!")
+    }
+
+    val newPassword = formParamOrFail(ctx, "password")
+    val givenToken = formParamOrFail(ctx, "token")
+
+    val query = PasswordResets.select { PasswordResets.token eq givenToken }
+
+    if (query.count() != 1) {
+        throw BadRequestResponse("Bad token.")
+    }
+
+    val res = query.first()
+
+    if (res[PasswordResets.expiration] < DateTime.now()) {
+        throw BadRequestResponse("Password reset expired. Please request a new one.")
+    }
+
+    val targetedUser = User.find { Users.email eq (res[PasswordResets.email]) }.firstOrNull() ?: throw BadRequestResponse("Bad token.")
+
+    targetedUser.password = BCrypt.hashpw(newPassword, BCrypt.gensalt())
 }
 
 private fun current(ctx: Context) {

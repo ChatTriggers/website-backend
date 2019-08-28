@@ -7,6 +7,7 @@ object Config {
     private val properties: Properties
 
     val db: DbConfig
+    val mail: MailConfig
 
     init {
         val file = File(".env.properties")
@@ -16,6 +17,11 @@ object Config {
             properties.getProperty("db.jdbcUrl"),
             properties.getProperty("db.username"),
             properties.getProperty("db.password")
+        )
+
+        mail = MailConfig(
+            properties.getProperty("mail.apikey"),
+            properties.getProperty("mail.from")
         )
     }
 }

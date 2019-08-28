@@ -1,17 +1,14 @@
 package com.chattriggers.website
 
-import com.chattriggers.website.config.DbConfig
+import com.chattriggers.website.data.DB
 import io.javalin.core.JavalinConfig
 import org.eclipse.jetty.server.session.DatabaseAdaptor
 import org.eclipse.jetty.server.session.DefaultSessionCache
 import org.eclipse.jetty.server.session.JDBCSessionDataStoreFactory
 import org.eclipse.jetty.server.session.SessionHandler
-import org.koin.core.KoinComponent
-import org.koin.core.get
 
-object Sessions : KoinComponent {
+object Sessions {
     private fun sqlSessionHandler() = SessionHandler().apply {
-        val dbConfig = get<DbConfig>()
 
         sessionCache = DefaultSessionCache(this).apply {
             // Evict sessions after a week no matter what.
@@ -19,7 +16,7 @@ object Sessions : KoinComponent {
 
             sessionDataStore = JDBCSessionDataStoreFactory().apply {
                 setDatabaseAdaptor(DatabaseAdaptor().apply {
-                    datasource = dbConfig.dataSource
+                    datasource = DB.dataSource
                 })
             }.getSessionDataStore(sessionHandler)
         }
