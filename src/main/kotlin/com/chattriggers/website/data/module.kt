@@ -38,7 +38,8 @@ class Module(id: EntityID<Int>) : IntEntity(id) {
         description,
         image,
         downloads,
-        tags.split(",").filter { !it.isBlank() }
+        tags.split(",").filter { !it.isBlank() },
+        releases.map(Release::public)
     )
 }
 
@@ -49,5 +50,6 @@ data class PublicModule (
     val description: String,
     val image: String?,
     val downloads: Int,
-    val tags: List<String>
+    val tags: List<String>,
+    val releases: List<PublicRelease>
 )
