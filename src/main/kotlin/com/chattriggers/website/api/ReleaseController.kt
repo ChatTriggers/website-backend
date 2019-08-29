@@ -67,6 +67,11 @@ class ReleaseController : CrudHandler {
         ctx.status(201).json(release.public())
     }
 
+    /**
+     * Deletes a release.
+     *
+     * DELETE /modules/:module-id/releases/:release-id
+     */
     override fun delete(ctx: Context, resourceId: String) = voidTransaction {
         val module = moduleOrFail(ctx)
 

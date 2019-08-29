@@ -32,6 +32,35 @@ fun loginRoutes() {
     }
 }
 
+private fun login(ctx: Context) {
+    if (ctx.sessionAttribute<User>("user") != null) {
+        ctx.status(200).json(ctx.sessionAttribute<User>("user")!!)
+        return
+    }
+
+    val username = formParamOrFail(ctx, "username")
+    val password = formParamOrFail(ctx, "password")
+
+    val dbUser = transaction {
+        User.find { Users.name eq username }.firstOrNull()
+    } ?: throw UnauthorizedResponse("Authentication failed.")
+
+    // Workaround for old php-era passwords. They changed the version number for no real reason.
+    val hashedPw = dbUser.password.replace("$2y$", "$2a$")
+
+    if (BCrypt.checkpw(password, hashedPw)) {
+        ctx.req.changeSessionId()
+
+        // User correctly authenticated.
+        ctx.sessionAttribute("user", dbUser)
+        ctx.sessionAttribute("role", dbUser.rank)
+
+        ctx.status(200).json(dbUser.public())
+    } else {
+        throw UnauthorizedResponse("Authentication failed.")
+    }
+}
+
 private fun new(ctx: Context) {
     if (ctx.sessionAttribute<User>("user") != null) FailureResponses.ALREADY_LOGGED_IN.throwResponse()
 
@@ -66,33 +95,10 @@ private fun logout(ctx: Context) {
     ctx.status(200).result("Logged out!")
 }
 
-private fun login(ctx: Context) {
-    if (ctx.sessionAttribute<User>("user") != null) {
-        ctx.status(200).json(ctx.sessionAttribute<User>("user")!!)
-        return
-    }
+private fun current(ctx: Context) {
+    val user = ctx.sessionAttribute<User>("user") ?: throw NotFoundResponse("No active user.")
 
-    val username = formParamOrFail(ctx, "username")
-    val password = formParamOrFail(ctx, "password")
-
-    val dbUser = transaction {
-        User.find { Users.name eq username }.firstOrNull()
-    } ?: return ctx.loginFail()
-
-    // Workaround for old php-era passwords. They changed the version number for no real reason.
-    val hashedPw = dbUser.password.replace("$2y$", "$2a$")
-
-    if (BCrypt.checkpw(password, hashedPw)) {
-        ctx.req.changeSessionId()
-
-        // User correctly authenticated.
-        ctx.sessionAttribute("user", dbUser)
-        ctx.sessionAttribute("role", dbUser.rank)
-
-        ctx.status(200).json(dbUser.public())
-    } else {
-        return ctx.loginFail()
-    }
+    ctx.status(200).json(user.personal())
 }
 
 private fun requestReset(ctx: Context) = voidTransaction {
@@ -118,6 +124,8 @@ private fun requestReset(ctx: Context) = voidTransaction {
 
     // Send email
     Emails.sendPasswordReset(email, randToken)
+
+    ctx.status(200).result("If there is an account associated with that email, a password reset link has been sent!")
 }
 
 private fun completeReset(ctx: Context) = voidTransaction {
@@ -143,14 +151,4 @@ private fun completeReset(ctx: Context) = voidTransaction {
     val targetedUser = User.find { Users.email eq (res[PasswordResets.email]) }.firstOrNull() ?: throw BadRequestResponse("Bad token.")
 
     targetedUser.password = BCrypt.hashpw(newPassword, BCrypt.gensalt())
-}
-
-private fun current(ctx: Context) {
-    val user = ctx.sessionAttribute<User>("user") ?: throw NotFoundResponse("No active user.")
-
-    ctx.status(200).json(user.personal())
-}
-
-private fun Context.loginFail() {
-    status(401).result("Authentication Failed.")
 }

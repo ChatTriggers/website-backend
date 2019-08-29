@@ -1,6 +1,7 @@
 package com.chattriggers.website.api
 
 import com.chattriggers.website.Auth
+import com.chattriggers.website.data.Module
 import com.chattriggers.website.data.User
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.BadRequestResponse
@@ -34,13 +35,10 @@ private fun trust(ctx: Context) {
     }
 }
 
-private fun modules(ctx: Context) {
-    transaction {
-        val userId = ctx.pathParam<Int>("user-id").getOrNull()
-            ?: throw BadRequestResponse("user-id must be an int.")
+private fun modules(ctx: Context) = voidTransaction {
+    val userId = ctx.pathParam<Int>("user-id").getOrNull() ?: throw BadRequestResponse("user-id must be an int.")
 
-        val user = User.findById(userId) ?: throw NotFoundResponse("No user found with specified user-id")
+    val user = User.findById(userId) ?: throw NotFoundResponse("No user found with specified user-id")
 
-        ctx.status(200).json(user.modules.toList())
-    }
+    ctx.status(200).json(user.modules.map(Module::public).toList())
 }
