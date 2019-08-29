@@ -55,7 +55,7 @@ private fun login(ctx: Context) {
         ctx.sessionAttribute("user", dbUser)
         ctx.sessionAttribute("role", dbUser.rank)
 
-        ctx.status(200).json(dbUser.public())
+        ctx.status(200).json(dbUser.personal())
     } else {
         throw UnauthorizedResponse("Authentication failed.")
     }
@@ -76,7 +76,7 @@ private fun new(ctx: Context) {
 
         if (!existing.empty()) FailureResponses.NAME_IN_USE.throwResponse()
 
-        User.new {
+        val user = User.new {
             name = newName
             email = newEmail
             password = BCrypt.hashpw(formParamOrFail(ctx, "password"), BCrypt.gensalt())
@@ -85,7 +85,7 @@ private fun new(ctx: Context) {
             updatedAt = DateTime.now()
         }
 
-        ctx.status(201).result("User created!")
+        ctx.status(201).json(user.personal())
     }
 }
 
