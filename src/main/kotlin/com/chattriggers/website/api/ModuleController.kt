@@ -21,6 +21,9 @@ class ModuleController : CrudHandler {
 
         voidTransaction {
             val newName = formParamOrFail(ctx, "name")
+
+            if (newName.length > 64) throw BadRequestResponse("Name is longer than 64 characters.")
+
             val existing = Module.find { Modules.name eq newName }
 
             if (!existing.empty()) throw ConflictResponse("Module with name '$newName' already exists!")

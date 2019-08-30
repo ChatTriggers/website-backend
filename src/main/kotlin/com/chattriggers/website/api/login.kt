@@ -26,11 +26,13 @@ fun loginRoutes() {
         get("current", ::current)
 
         path("reset") {
-            get("request", ::requestReset)
+            post("request", ::requestReset)
             post("complete", ::completeReset)
         }
     }
 }
+
+private val nameRegex = """^\w{3,16}$""".toRegex()
 
 private fun login(ctx: Context) {
     if (ctx.sessionAttribute<User>("user") != null) {
@@ -66,6 +68,9 @@ private fun new(ctx: Context) {
 
     transaction {
         val newName = formParamOrFail(ctx, "name")
+
+        if (!newName.matches(nameRegex)) throw BadRequestResponse("Invalid username.")
+
         val newEmail = formParamOrFail(ctx, "email")
 
         var existing = User.find { Users.email eq newEmail }

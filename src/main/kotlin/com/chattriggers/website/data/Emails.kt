@@ -21,7 +21,17 @@ object Emails : KoinComponent {
     fun sendPasswordReset(toEmailString: String, resetToken: String) {
         val toEmail = Email(toEmailString)
         val subject = "ChatTriggers Password Reset Requested"
-        val content = Content()
+        val content = Content("text/plain", """
+            Somebody (hopefully you) requested a password reset for the ChatTriggers account for $toEmailString. No changes have been made to your account yet.
+            
+            You can reset your password by clicking the link below:
+            
+                https://chattriggers.com/passwordreset?token=$resetToken
+            
+            If you did not request a new password, please let us know on discord here: https://discord.gg/0fNjZyopOvBHZyG8.
+            
+            Thanks!
+        """.trimIndent())
 
         val mail = Mail(fromEmail, subject, toEmail, content)
 
