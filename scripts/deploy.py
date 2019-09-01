@@ -18,13 +18,10 @@ ssh_client.connect(hostname=os.environ["SERVER_HOST"],username=os.environ["SERVE
 stdin, stdout, stderr = ssh_client.exec_command("rm /root/web/server.log")  # Non-blocking call
 stdout.channel.recv_exit_status()                                           # Blocking call
 
-stdin, stdout, stderr = ssh_client.exec_command("cd /root/web")             # Non-blocking call
-stdout.channel.recv_exit_status()                                           # Blocking call
-
 stdin, stdout, stderr = ssh_client.exec_command("killall java")             # Non-blocking call
 stdout.channel.recv_exit_status()                                           # Blocking call
 
-stdin, stdout, stderr = ssh_client.exec_command("java -jar /root/web/server.jar > /root/web/server.log 2>&1 &")
+stdin, stdout, stderr = ssh_client.exec_command("cd /root/web; java -jar /root/web/server.jar > /root/web/server.log 2>&1 &")
 stdout.channel.recv_exit_status()
 
 ssh_client.close()
