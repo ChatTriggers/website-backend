@@ -20,12 +20,12 @@ CREATE TABLE IF NOT EXISTS Releases
     downloads INT DEFAULT 0 NOT NULL,
     created_at DATETIME(6) NOT NULL,
     updated_at DATETIME(6) NOT NULL,
-    CONSTRAINT fk_Releases_module_id_id FOREIGN KEY (module_id) REFERENCES Modules(id) ON DELETE RESTRICT ON UPDATE RESTRICT
-)
+    CONSTRAINT fk_Releases_module_id_id FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE RESTRICT ON UPDATE RESTRICT
+);
 ```
 
 # Modules
 ```sql
-alter table Modules modify name varchar(64) not null;
-alter table Modules add tags varchar(2000) default ''
+alter table modules modify name varchar(64) not null;
+alter table modules add tags varchar(2000) default '';
 ```
