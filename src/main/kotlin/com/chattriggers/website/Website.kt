@@ -15,7 +15,7 @@ val configModule = module {
     single { Config.mail }
 }
 
-fun main() {
+fun main(args: Array<String>) {
     startKoin {
         modules(listOf(configModule))
     }
@@ -25,11 +25,12 @@ fun main() {
     val app = Javalin.create {
         Sessions.configure(it)
         Auth.configure(it)
+        it.enableDevLogging()
 
         it.addStaticFiles("static/", Location.EXTERNAL)
 
         it.enableCorsForAllOrigins()
-    }.start(7000)
+    }.start(if (args.any { it == "--production" }) 80 else 7000)
 
     makeApiRoutes(app)
 }
