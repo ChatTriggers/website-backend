@@ -16,6 +16,17 @@ import org.joda.time.DateTime
 class ModuleController : CrudHandler {
     private val imgurRegex = """^https?:\/\/(\w+\.)?imgur.com\/[a-zA-Z0-9]{7}\.[a-zA-Z0-9]+${'$'}""".toRegex()
 
+    /**
+     * Creates a new Module. Does not instantiate any releases.
+     *
+     * POST /modules
+     *
+     * Form params:
+     *  - name: String
+     *  - tags: Array<String>
+     *  - description: String
+     *  - image: String?
+     */
     override fun create(ctx: Context) {
         val currentUser = ctx.sessionAttribute<User>("user") ?: throw UnauthorizedResponse("Not logged in!")
 
@@ -166,14 +177,5 @@ class ModuleController : CrudHandler {
         module.updatedAt = DateTime.now()
 
         ctx.status(200).json(module.public())
-    }
-
-    private fun <T> toSQLList(first: ExpressionWithColumnType<T>, vararg exprs: ExpressionWithColumnType<T>) = object : ExpressionWithColumnType<T>() {
-        override val columnType: IColumnType
-            get() = first.columnType
-
-        override fun toSQL(queryBuilder: QueryBuilder): String {
-            return "${first.toSQL(queryBuilder)},${exprs.joinToString(separator = ",") { it.toSQL(queryBuilder) }}"
-        }
     }
 }

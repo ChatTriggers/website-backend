@@ -23,6 +23,7 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.9.9")
     implementation("com.sendgrid:sendgrid-java:4.4.1")
+    implementation("com.overzealous:remark:1.1.0")
 }
 
 tasks.withType<KotlinCompile> {
