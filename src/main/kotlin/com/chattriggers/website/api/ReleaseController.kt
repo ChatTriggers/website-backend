@@ -124,9 +124,9 @@ class ReleaseController : CrudHandler {
 
         if (!releaseFolder.exists()) throw NotFoundResponse("No release folder found.")
 
-        val file = when (ctx.queryParam("file")) {
-            "metadata" -> File(releaseFolder, METADATA_NAME)
-            "scripts" -> File(releaseFolder, SCRIPTS_NAME)
+        val data = when (ctx.queryParam("file")) {
+            "metadata" -> File(releaseFolder, METADATA_NAME) to "application/json"
+            "scripts" -> File(releaseFolder, SCRIPTS_NAME) to "application/zip"
             null -> { // file parameter not specified, assume the user wants the json
                 ctx.status(200).json(release.public())
                 return@voidTransaction
@@ -134,7 +134,7 @@ class ReleaseController : CrudHandler {
             else -> throw BadRequestResponse("Invalid 'file' query parameter.")
         }
 
-        ctx.status(200).result(file.inputStream())
+        ctx.status(200).contentType(data.second).result(data.first.inputStream())
     }
 
     /**
