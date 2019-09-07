@@ -27,26 +27,33 @@ fun moduleRoutes() {
 }
 
 fun getMetadata(ctx: Context) {
-    val releaseFolder = getReleaseFolder(ctx) ?: throw NotFoundResponse("No release applicable for specified mod version.")
+    val releaseFolder = getReleaseFolder(ctx,
+        modVersion = ctx.queryParam("modVersion")
+            ?: throw BadRequestResponse("Missing 'modVersion' query parameter.")
+    ) ?: throw NotFoundResponse("No release applicable for specified mod version.")
+
     val file = File(releaseFolder, METADATA_NAME)
 
     ctx.status(200).contentType("application/json").result(file.inputStream())
 }
 
 fun getScripts(ctx: Context) {
-    val releaseFolder = getReleaseFolder(ctx, incrementDownloads = true) ?: throw NotFoundResponse("No release applicable for specified mod version.")
+    val releaseFolder = getReleaseFolder(ctx,
+        modVersion = ctx.queryParam("modVersion")
+            ?: throw BadRequestResponse("Missing 'modVersion' query parameter."),
+        incrementDownloads = true
+    ) ?: throw NotFoundResponse("No release applicable for specified mod version.")
+
     val file = File(releaseFolder, SCRIPTS_NAME)
 
     ctx.status(200).contentType("application/zip").result(file.inputStream())
 }
 
-fun getReleaseFolder(ctx: Context, incrementDownloads: Boolean = false) = transaction {
+fun getReleaseFolder(ctx: Context, modVersion: String, incrementDownloads: Boolean = false) = transaction {
     val moduleName = ctx.pathParam("module-name").toLowerCase()
 
     val module = Module.find { Modules.name.lowerCase() eq moduleName }
         .firstOrNull() ?: throw NotFoundResponse("No module with that module-name")
-
-    val modVersion = ctx.queryParam("modVersion") ?: throw BadRequestResponse("Missing 'modVersion' query parameter.")
 
     try {
         val release = getReleaseForModVersion(module, modVersion) ?: return@transaction null

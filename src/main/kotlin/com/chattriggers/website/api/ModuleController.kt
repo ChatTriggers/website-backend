@@ -15,6 +15,7 @@ import org.joda.time.DateTime
 
 class ModuleController : CrudHandler {
     private val imgurRegex = """^https?:\/\/(\w+\.)?imgur.com\/[a-zA-Z0-9]{7}\.[a-zA-Z0-9]+${'$'}""".toRegex()
+    private val nameRegex = """^[\w\d\s]{3,64}$""".toRegex()
 
     /**
      * Creates a new Module. Does not instantiate any releases.
@@ -33,7 +34,7 @@ class ModuleController : CrudHandler {
         voidTransaction {
             val newName = formParamOrFail(ctx, "name")
 
-            if (newName.length > 64) throw BadRequestResponse("Name is longer than 64 characters.")
+            if (!newName.matches(nameRegex)) throw BadRequestResponse("Name is invalid. Could use an invalid character, be shorter than 3 characters, or longer than 64 characters.")
 
             val existing = Module.find { Modules.name eq newName }
 

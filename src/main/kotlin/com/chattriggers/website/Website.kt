@@ -1,6 +1,7 @@
 package com.chattriggers.website
 
 import com.chattriggers.website.api.makeApiRoutes
+import com.chattriggers.website.api.makeCompatRoutes
 import com.chattriggers.website.config.Config
 import com.chattriggers.website.data.DB
 import io.javalin.Javalin
@@ -22,15 +23,18 @@ fun main(args: Array<String>) {
 
     DB.setupDB()
 
+    val production = args.any { it == "--production" }
+
     val app = Javalin.create {
         Sessions.configure(it)
         Auth.configure(it)
-        it.enableDevLogging()
+
+        if (production) it.enableDevLogging()
 
         it.addStaticFiles("static/", Location.EXTERNAL)
-
         it.enableCorsForAllOrigins()
-    }.start(if (args.any { it == "--production" }) 80 else 7000)
+    }.start(if (production) 80 else 7000)
 
     makeApiRoutes(app)
+    makeCompatRoutes(app)
 }

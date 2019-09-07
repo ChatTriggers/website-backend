@@ -165,23 +165,27 @@ class ReleaseController : CrudHandler {
             release.changelog = it
         }
 
-        ctx.uploadedFile("module")?.let {
-            val folder = File("storage/${module.name.toLowerCase()}/${release.id.value}")
-            val toCopy = File("storage/${module.name.toLowerCase()}/${release.id.value}-backup")
+//        It's been decided it makes no sense to edit a Release's module files. By reusing the same Release,
+//        the client has no way to know the module has changed, and thus won't auto-update.
+//        Instead, the user ought to make a new Release.
 
-            folder.copyRecursively(toCopy)
-
-            try {
-                it.saveModuleToFolder(folder)
-            } catch (e: Exception) {
-                release.delete()
-                folder.deleteRecursively()
-                toCopy.copyRecursively(folder)
-                throw e
-            } finally {
-                toCopy.deleteRecursively()
-            }
-        }
+//        ctx.uploadedFile("module")?.let {
+//            val folder = File("storage/${module.name.toLowerCase()}/${release.id.value}")
+//            val toCopy = File("storage/${module.name.toLowerCase()}/${release.id.value}-backup")
+//
+//            folder.copyRecursively(toCopy)
+//
+//            try {
+//                it.saveModuleToFolder(folder)
+//            } catch (e: Exception) {
+//                release.delete()
+//                folder.deleteRecursively()
+//                toCopy.copyRecursively(folder)
+//                throw e
+//            } finally {
+//                toCopy.deleteRecursively()
+//            }
+//        }
 
         ctx.status(200).json(release.public())
     }
