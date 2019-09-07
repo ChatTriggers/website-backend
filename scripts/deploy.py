@@ -1,5 +1,9 @@
 import os
 import paramiko
+import sys
+
+if os.environ["TRAVIS_REPO_SLUG"] != "ChatTriggers/website-backend" or os.environ["TRAVIS_PULL_REQUEST"] != "false" or os.environ["TRAVIS_BRANCH"] != "master":
+    sys.exit()
 
 transport = paramiko.Transport((os.environ["SERVER_HOST"], 22))
 transport.connect(username=os.environ["SERVER_USER"], password=os.environ["SERVER_PASS"])
