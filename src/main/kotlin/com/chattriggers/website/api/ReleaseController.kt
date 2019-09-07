@@ -165,7 +165,7 @@ class ReleaseController : CrudHandler {
             release.changelog = it
         }
 
-        /*ctx.uploadedFile("module")?.let {
+        ctx.uploadedFile("module")?.let {
             val folder = File("storage/${module.name.toLowerCase()}/${release.id.value}")
             val toCopy = File("storage/${module.name.toLowerCase()}/${release.id.value}-backup")
 
@@ -181,7 +181,7 @@ class ReleaseController : CrudHandler {
             } finally {
                 toCopy.deleteRecursively()
             }
-        }*/
+        }
 
         ctx.status(200).json(release.public())
     }
