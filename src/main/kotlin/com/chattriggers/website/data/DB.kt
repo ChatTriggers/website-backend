@@ -16,6 +16,7 @@ object DB : KoinComponent {
     }
 
     fun setupDB() {
+        Class.forName("com.mysql.cj.jdbc.Driver")
         Database.connect(dataSource)
     }
 }

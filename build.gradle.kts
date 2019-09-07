@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.chattriggers"
-version = "0.0.1"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -23,8 +23,24 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.9.9")
     implementation("com.sendgrid:sendgrid-java:4.4.1")
+    implementation("com.overzealous:remark:1.1.0")
 }
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
+}
+
+tasks.register<Jar>("uberJar") {
+    appendix = "uber"
+
+    manifest {
+        attributes["Main-Class"] = "com.chattriggers.website.WebsiteKt"
+    }
+
+    from(sourceSets.main.get().output)
+
+    dependsOn(configurations.runtimeClasspath)
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
+    })
 }
