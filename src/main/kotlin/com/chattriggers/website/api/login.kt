@@ -67,7 +67,7 @@ private fun new(ctx: Context) {
     if (ctx.sessionAttribute<User>("user") != null) FailureResponses.ALREADY_LOGGED_IN.throwResponse()
 
     transaction {
-        val newName = formParamOrFail(ctx, "name")
+        val newName = formParamOrFail(ctx, "username")
 
         if (!newName.matches(nameRegex)) throw BadRequestResponse("Invalid username.")
 
