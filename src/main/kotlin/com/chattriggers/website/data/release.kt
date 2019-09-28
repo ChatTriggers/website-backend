@@ -27,14 +27,7 @@ class Release(id: EntityID<UUID>) : UUIDEntity(id) {
     var createdAt by Releases.createdAt
     var updatedAt by Releases.updatedAt
 
-    fun public() = PublicRelease(
-        id.value,
-        releaseVersion,
-        modVersion,
-        changelog,
-        downloads,
-        createdAt.millis
-    )
+    fun public() = PublicRelease(id.value, releaseVersion, modVersion, changelog, downloads)
 }
 
 data class PublicRelease(
@@ -42,6 +35,5 @@ data class PublicRelease(
     val releaseVersion: String,
     val modVersion: String,
     val changelog: String,
-    val downloads: Int,
-    val createdAt: Long
+    val downloads: Int
 )
