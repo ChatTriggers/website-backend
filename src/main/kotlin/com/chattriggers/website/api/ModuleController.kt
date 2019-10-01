@@ -92,8 +92,11 @@ class ModuleController : CrudHandler {
                 modifiers = modifiers and Op.build { Users.rank neq Auth.Roles.default }
             }
 
-            ctx.queryParam("tag")?.let {
-                modifiers = modifiers and Op.build { Modules.tags like "%$it%" }
+            ctx.queryParam("tags")?.split(",")?.let { tags ->
+                modifiers = modifiers and Op.build {
+                    tags.map { Modules.tags like "%$it%" }
+                        .reduce { a, b -> a or b }
+                }
             }
 
             ctx.queryParam("q")?.let {
