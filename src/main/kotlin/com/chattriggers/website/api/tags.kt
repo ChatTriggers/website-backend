@@ -10,12 +10,12 @@ fun tagRoutes() {
 
 const val TAGS_FILE = "tags.txt"
 const val TIMEOUT = 1000 * 60 * 30
-var allowedTags = File(TAGS_FILE).readText().split(",").map { it.trim() }
+var allowedTags = File(TAGS_FILE).readText().split("\n").map { it.trim() }
 var lastCheckTime = System.currentTimeMillis()
 
 fun getTags(ctx: Context) {
     if (System.currentTimeMillis() - lastCheckTime > TIMEOUT) {
-        allowedTags = File(TAGS_FILE).readText().split(",").map { it.trim() }
+        allowedTags = File(TAGS_FILE).readText().split("\n").map { it.trim() }
 
         lastCheckTime = System.currentTimeMillis()
     }
