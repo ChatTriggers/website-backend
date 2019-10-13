@@ -120,7 +120,11 @@ class ModuleController : CrudHandler {
 
             val total = preSorted.count()
 
-            val modules = preSorted.orderBy(Modules.createdAt to SortOrder.DESC)
+            val sortType = (ctx.queryParam("sort") ?: "DATE_CREATED_DESC").toUpperCase()
+            val sort = try { SortType.valueOf(sortType).order }
+                        catch (e: Exception) { throw BadRequestResponse("Sort type $sortType is not valid") }
+
+            val modules = preSorted.orderBy(sort)
                 .limit(limit, offset)
                 .map(Module::public)
 
@@ -181,5 +185,12 @@ class ModuleController : CrudHandler {
         module.updatedAt = DateTime.now()
 
         ctx.status(200).json(module.public())
+    }
+
+    enum class SortType(val order: Pair<Expression<*>, SortOrder>) {
+        DATE_CREATED_DESC(Modules.createdAt to SortOrder.DESC),
+        DATE_CREATED_ASC(Modules.createdAt to SortOrder.ASC),
+        DOWNLOADS_DESC(Modules.downloads to SortOrder.DESC),
+        DOWNLOADS_ASC(Modules.downloads to SortOrder.ASC)
     }
 }
