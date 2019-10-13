@@ -44,6 +44,9 @@ class ReleaseController : CrudHandler {
         if (existingRelease != null) throw BadRequestResponse("There already exists a release with version number $releaseVersion")
 
         val modVersion = formParamOrFail(ctx, "modVersion")
+
+        if (modVersion !in allowedVersions) throw BadRequestResponse("The provided mod version does not exist.")
+
         val changelog = ctx.formParam("changelog") ?: ""
 
         val moduleFile = ctx.uploadedFile("module") ?: throw BadRequestResponse("Missing module zip file")
