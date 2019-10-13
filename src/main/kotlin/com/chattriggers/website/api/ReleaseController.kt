@@ -11,6 +11,7 @@ import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import io.javalin.http.NotFoundResponse
 import io.javalin.http.UnauthorizedResponse
+import org.jetbrains.exposed.sql.and
 import org.joda.time.DateTime
 import java.io.File
 import java.util.*
@@ -32,6 +33,16 @@ class ReleaseController : CrudHandler {
         if (!ctx.isMultipartFormData()) throw BadRequestResponse("Must be multipart/form-data")
 
         val releaseVersion = formParamOrFail(ctx, "releaseVersion")
+
+        if (!validateVersion(releaseVersion)) throw BadRequestResponse("Malformed release version parameter. Must conform to the Semver spec.")
+
+        val existingRelease = Release.find {
+            (Releases.releaseVersion eq releaseVersion) and
+                    (Releases.module eq module.id)
+        }.firstOrNull()
+
+        if (existingRelease != null) throw BadRequestResponse("There already exists a release with version number $releaseVersion")
+
         val modVersion = formParamOrFail(ctx, "modVersion")
         val changelog = ctx.formParam("changelog") ?: ""
 
@@ -142,7 +153,7 @@ class ReleaseController : CrudHandler {
     }
 
     /**
-     * Create a new Release instance.
+     * Updates an existing Release instance.
      *
      * PATCH /modules/:module-id/releases/:release-id
      * form parameters-
@@ -203,6 +214,18 @@ class ReleaseController : CrudHandler {
         if (access == Auth.Roles.default && module.owner != currentUser) throw UnauthorizedResponse("No permissions!")
 
         return module
+    }
+
+    private fun validateVersion(versionString: String): Boolean {
+        val components = versionString.split(".")
+
+        if (components.size != 3) return false
+
+        for (component in components) {
+            try { component.toInt() } catch (e: NumberFormatException) { return false }
+        }
+
+        return true
     }
 
     companion object {
