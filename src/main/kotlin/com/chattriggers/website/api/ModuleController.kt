@@ -14,8 +14,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 
 class ModuleController : CrudHandler {
-    private val imgurRegex = """^https?:\/\/(\w+\.)?imgur.com\/[a-zA-Z0-9]{7}\.[a-zA-Z0-9]+${'$'}""".toRegex()
-    private val nameRegex = """^[\w\d\s]{3,64}$""".toRegex()
+    private val imgurRegex = """^https?:\/\/(\w+\.)?imgur.com\/[a-zA-Z0-9]{7}\.[a-zA-Z0-9]+$""".toRegex()
+    private val nameRegex = """^\w{3,64}$""".toRegex()
 
     /**
      * Creates a new Module. Does not instantiate any releases.
