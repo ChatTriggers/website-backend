@@ -143,7 +143,13 @@ class ModuleController : CrudHandler {
         val user = ctx.sessionAttribute<User>("user")
         val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
 
-        val module = getModuleOrFail(resourceId, user, access)
+        val module = try {
+            getModuleOrFail(resourceId, user, access)
+        } catch (e: Exception) {
+            // Try to use resourceId as the module name
+            Module.find { Modules.name.lowerCase() eq resourceId }
+                .firstOrNull() ?: throw BadRequestResponse("No module with specified resourceId")
+        }
 
         ctx.status(200).json(module.public())
     }
