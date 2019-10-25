@@ -81,10 +81,14 @@ private fun new(ctx: Context) {
 
         if (!existing.empty()) FailureResponses.NAME_IN_USE.throwResponse()
 
+        val newPassword = formParamOrFail(ctx, "password")
+
+        if (newPassword.length < 8) throw BadRequestResponse("Password is too short.")
+
         val user = User.new {
             name = newName
             email = newEmail
-            password = BCrypt.hashpw(formParamOrFail(ctx, "password"), BCrypt.gensalt())
+            password = BCrypt.hashpw(newPassword, BCrypt.gensalt())
             rank = Auth.Roles.default
             createdAt = DateTime.now()
             updatedAt = DateTime.now()
