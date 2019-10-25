@@ -121,14 +121,19 @@ class ModuleController : CrudHandler {
             val total = preSorted.count()
 
             val sortType = (ctx.queryParam("sort") ?: "DATE_CREATED_DESC").toUpperCase()
-            val sort = try { SortType.valueOf(sortType).order }
-                        catch (e: Exception) { throw BadRequestResponse("Sort type $sortType is not valid") }
+            val sort = try {
+                SortType.valueOf(sortType).order
+            } catch (e: Exception) {
+                throw BadRequestResponse("Sort type $sortType is not valid")
+            }
 
             val modules = preSorted.orderBy(sort)
                 .limit(limit, offset)
-                .map(Module::public)
 
-            ModuleResponse(ModuleMeta(limit, offset, total), modules)
+            val moduleData =
+                if (access == Auth.Roles.default) modules.map(Module::public) else modules.map(Module::authorized)
+
+            ModuleResponse(ModuleMeta(limit, offset, total), moduleData)
         }
 
         ctx.status(200).json(modulesResponse)

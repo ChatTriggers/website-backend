@@ -31,6 +31,18 @@ class Module(id: EntityID<Int>) : IntEntity(id) {
     var updatedAt by Modules.updatedAt
     val releases by Release referrersOn Releases.module
 
+    fun authorized(): PublicModule = AuthorizedModule(
+        id.value,
+        owner.public(),
+        name,
+        description,
+        image,
+        downloads,
+        tags.split(",").filter { !it.isBlank() },
+        releases.map(Release::public),
+        hidden
+    )
+
     fun public() = PublicModule(
         id.value,
         owner.public(),
@@ -43,7 +55,7 @@ class Module(id: EntityID<Int>) : IntEntity(id) {
     )
 }
 
-data class PublicModule (
+open class PublicModule(
     val id: Int,
     val owner: PublicUser,
     val name: String,
@@ -52,4 +64,12 @@ data class PublicModule (
     val downloads: Int,
     val tags: List<String>,
     val releases: List<PublicRelease>
+)
+
+class AuthorizedModule(
+    id: Int, owner: PublicUser, name: String, description: String, image: String?,
+    downloads: Int, tags: List<String>, releases: List<PublicRelease>, val flagged: Boolean
+) : PublicModule(
+    id, owner, name,
+    description, image, downloads, tags, releases
 )
