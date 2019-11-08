@@ -49,6 +49,7 @@ fun main() {
             }
 
             val newFolder = File("storage/${it.name.toLowerCase()}/${release.id.value}/")
+            newFolder.mkdirs()
 
             println("\tNew folder: ${newFolder.absolutePath}\n")
 
