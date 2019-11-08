@@ -25,5 +25,8 @@ fun makeCompatRoutes(app: Javalin) {
             get("metadata/:module-name", ::handleOldMetadata)
             get("scripts/:module-name", ::handleOldScripts)
         }
+        get("tracker") {
+            it.status(200)
+        }
     }
 }
