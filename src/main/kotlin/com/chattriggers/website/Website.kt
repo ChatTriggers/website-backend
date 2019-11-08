@@ -2,7 +2,6 @@ package com.chattriggers.website
 
 import com.chattriggers.website.api.makeApiRoutes
 import com.chattriggers.website.api.makeCompatRoutes
-import com.chattriggers.website.api.makeHomeRoute
 import com.chattriggers.website.config.Config
 import com.chattriggers.website.data.DB
 import io.javalin.Javalin
