@@ -54,7 +54,8 @@ fun main(args: Array<String>) {
         }
 
         it.addStaticFiles("static/", Location.EXTERNAL)
-        it.addSinglePageRoot("/", "static/index.html", Location.EXTERNAL)
+        it.addSinglePageRoot("/", "static/home/index.html", Location.EXTERNAL)
+        it.addSinglePageRoot("/modules", "static/frontend/index.html", Location.EXTERNAL)
     }.start(if (production) 80 else 7000)
 
     makeApiRoutes(app)
