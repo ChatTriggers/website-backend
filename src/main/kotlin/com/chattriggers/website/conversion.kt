@@ -28,6 +28,8 @@ fun main() {
 
     voidTransaction {
         Module.all().forEach {
+            if (!it.releases.empty()) return@forEach
+
             println("Create release for ${it.name}")
 
             val changelog = "### Initial Release" +
