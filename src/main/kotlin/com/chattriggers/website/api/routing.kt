@@ -28,5 +28,10 @@ fun makeCompatRoutes(app: Javalin) {
         get("tracker") {
             it.status(200)
         }
+        path("versions") {
+            get("latest") {
+                it.result("ct.js-1.0.0-TODO.jar").status(200)
+            }
+        }
     }
 }
