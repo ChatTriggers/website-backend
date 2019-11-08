@@ -50,11 +50,11 @@ fun main(args: Array<String>) {
             it.compressionStrategy(null, null)
         } else {
             it.enableDevLogging()
+            it.enableCorsForAllOrigins()
         }
 
         it.addStaticFiles("static/", Location.EXTERNAL)
         it.addSinglePageRoot("/", "static/index.html", Location.EXTERNAL)
-        it.enableCorsForAllOrigins()
     }.start(if (production) 80 else 7000)
 
     makeApiRoutes(app)
