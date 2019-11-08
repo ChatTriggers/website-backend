@@ -27,11 +27,3 @@ fun makeCompatRoutes(app: Javalin) {
         }
     }
 }
-
-fun makeHomeRoute(app: Javalin) {
-    app.routes {
-        get("/") {
-            it.redirect("/home")
-        }
-    }
-}

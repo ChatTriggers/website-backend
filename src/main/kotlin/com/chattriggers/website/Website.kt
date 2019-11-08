@@ -61,7 +61,6 @@ fun main(args: Array<String>) {
 
     makeApiRoutes(app)
     makeCompatRoutes(app)
-    makeHomeRoute(app)
 }
 
 private fun sslContextFactory(): SslContextFactory {
