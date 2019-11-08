@@ -54,9 +54,9 @@ fun main(args: Array<String>) {
             it.enableCorsForAllOrigins()
         }
 
-        it.addStaticFiles("static/", Location.EXTERNAL)
-        it.addSinglePageRoot("/home", "static/home/index.html", Location.EXTERNAL)
-        it.addSinglePageRoot("/modules", "static/frontend/index.html", Location.EXTERNAL)
+        it.addStaticFiles("static/home/", Location.EXTERNAL)
+        it.addStaticFiles("static/frontend/", Location.EXTERNAL)
+        it.addSinglePageRoot("/modules", "static/frontend/app.html", Location.EXTERNAL)
     }.start(if (production) 80 else 7000)
 
     makeApiRoutes(app)
