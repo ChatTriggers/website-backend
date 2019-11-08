@@ -62,15 +62,15 @@ fun main() {
                 try {
                     ZipFile(zipToSave).close()
                 } catch (e: Exception) {
-//                    zipToSave.delete()
+                    zipToSave.delete()
                     throw BadRequestResponse("Module is not a valid zip file!")
                 }
 
                 Files.copy(File(oldFolder, "metadata.json").inputStream(), File(newFolder, METADATA_NAME).toPath())
 
             } catch (e: Exception) {
-//                release.delete()
-//                folder.deleteRecursively()
+                release.delete()
+                newFolder.deleteRecursively()
                 throw e
             }
 
