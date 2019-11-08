@@ -25,7 +25,7 @@ stdout.channel.recv_exit_status()                                           # Bl
 stdin, stdout, stderr = ssh_client.exec_command("killall java")             # Non-blocking call
 stdout.channel.recv_exit_status()                                           # Blocking call
 
-stdin, stdout, stderr = ssh_client.exec_command("cd /root/web; java -jar /root/web/server.jar > /root/web/server.log 2>&1 &")
+stdin, stdout, stderr = ssh_client.exec_command("cd /root/web; java -jar /root/web/server.jar --production > /root/web/server.log 2>&1 &")
 stdout.channel.recv_exit_status()
 
 ssh_client.close()
