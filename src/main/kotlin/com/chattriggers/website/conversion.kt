@@ -28,51 +28,54 @@ fun main() {
 
     voidTransaction {
         Module.all().forEach {
-            if (!it.releases.empty()) return@forEach
-
-            println("Create release for ${it.name}")
-
-            val changelog = "### Initial Release" +
-                    "" +
+            it.releases.forEach { release ->
+                release.changelog = "**Initial Release**\n\n" +
                     "_Note: This release was automatically created from the pre-existing script files, and was assumed " +
                     "to be for mod version 0.18.4._"
-
-            val oldFolder = File("/var/www/laravel/public/storage/zips/${it.name}/")
-
-            println("\tOld folder: ${oldFolder.absolutePath}")
-
-            val release = Release.new {
-                this.module = it
-                this.releaseVersion = "1.0.0"
-                this.modVersion = "0.18.4"
-                this.changelog = changelog
-                this.createdAt = DateTime(oldFolder.lastModified())
-                this.updatedAt = DateTime(oldFolder.lastModified())
             }
 
-            val newFolder = File("storage/${it.name.toLowerCase()}/${release.id.value}/")
-            newFolder.mkdirs()
-
-            println("\tNew folder: ${newFolder.absolutePath}\n")
-
-            try {
-                val zipToSave = File(newFolder, SCRIPTS_NAME)
-                zipToSave.writeBytes(File(oldFolder, "scripts.zip").readBytes())
-
-                try {
-                    ZipFile(zipToSave).close()
-                } catch (e: Exception) {
-                    zipToSave.delete()
-                    println("\tModule is not a valid zip file!")
-                }
-
-                Files.copy(File(oldFolder, "metadata.json").inputStream(), File(newFolder, METADATA_NAME).toPath())
-
-            } catch (e: Exception) {
-                release.delete()
-                newFolder.deleteRecursively()
-                println("\tError creating module")
-            }
+//            println("Create release for ${it.name}")
+//
+//            val changelog = "### Initial Release\n\n" +
+//                    "_Note: This release was automatically created from the pre-existing script files, and was assumed " +
+//                    "to be for mod version 0.18.4._"
+//
+//            val oldFolder = File("/var/www/laravel/public/storage/zips/${it.name}/")
+//
+//            println("\tOld folder: ${oldFolder.absolutePath}")
+//
+//            val release = Release.new {
+//                this.module = it
+//                this.releaseVersion = "1.0.0"
+//                this.modVersion = "0.18.4"
+//                this.changelog = changelog
+//                this.createdAt = DateTime(oldFolder.lastModified())
+//                this.updatedAt = DateTime(oldFolder.lastModified())
+//            }
+//
+//            val newFolder = File("storage/${it.name.toLowerCase()}/${release.id.value}/")
+//            newFolder.mkdirs()
+//
+//            println("\tNew folder: ${newFolder.absolutePath}\n")
+//
+//            try {
+//                val zipToSave = File(newFolder, SCRIPTS_NAME)
+//                zipToSave.writeBytes(File(oldFolder, "scripts.zip").readBytes())
+//
+//                try {
+//                    ZipFile(zipToSave).close()
+//                } catch (e: Exception) {
+//                    zipToSave.delete()
+//                    println("\tModule is not a valid zip file!")
+//                }
+//
+//                Files.copy(File(oldFolder, "metadata.json").inputStream(), File(newFolder, METADATA_NAME).toPath())
+//
+//            } catch (e: Exception) {
+//                release.delete()
+//                newFolder.deleteRecursively()
+//                println("\tError creating module")
+//            }
 
         }
 
