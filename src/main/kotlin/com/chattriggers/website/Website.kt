@@ -6,8 +6,13 @@ import com.chattriggers.website.config.Config
 import com.chattriggers.website.data.DB
 import io.javalin.Javalin
 import io.javalin.http.staticfiles.Location
+import org.eclipse.jetty.server.Connector
+import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.server.ServerConnector
+import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
+import java.io.File
 
 // Where all of our configuration is managed.
 // Making this injected allows for testing with fake db configurations.
@@ -29,12 +34,37 @@ fun main(args: Array<String>) {
         Sessions.configure(it)
         Auth.configure(it)
 
-        if (production) it.enableDevLogging()
+        if (production) {
+            it.enforceSsl = true
+
+            it.server {
+                val server = Server()
+                val sslConnector = ServerConnector(server, sslContextFactory())
+                sslConnector.port = 443
+                val connector = ServerConnector(server)
+                connector.port = 80
+                server.connectors = arrayOf<Connector>(sslConnector, connector)
+                server
+            }
+
+            it.compressionStrategy(null, null)
+        } else {
+            it.enableDevLogging()
+        }
 
         it.addStaticFiles("static/", Location.EXTERNAL)
+        it.addSinglePageRoot("/", "static/index.html", Location.EXTERNAL)
         it.enableCorsForAllOrigins()
     }.start(if (production) 80 else 7000)
 
     makeApiRoutes(app)
     makeCompatRoutes(app)
+}
+
+
+private fun sslContextFactory(): SslContextFactory {
+    val sslContextFactory = SslContextFactory.Server()
+    sslContextFactory.keyStorePath = File("/root/ssl/cert.jks").toString()
+    sslContextFactory.setKeyStorePassword(Config.properties.getProperty("cert.pass"))
+    return sslContextFactory
 }

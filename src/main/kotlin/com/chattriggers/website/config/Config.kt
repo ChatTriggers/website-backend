@@ -4,7 +4,7 @@ import java.io.File
 import java.util.*
 
 object Config {
-    private val properties: Properties
+    val properties: Properties
 
     val db: DbConfig
     val mail: MailConfig

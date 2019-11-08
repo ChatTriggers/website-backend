@@ -26,6 +26,7 @@ fun getVersions(ctx: Context) {
 private fun loadVersions() = File(VERSIONS_FILE)
     .readText()
     .split("\n")
+    .filter { !it.isBlank() }
     .map { it.trim().toVersion() }
     .sortedDescending()
     .map { it.toString() }
