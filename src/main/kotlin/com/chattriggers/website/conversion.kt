@@ -63,7 +63,7 @@ fun main() {
                     ZipFile(zipToSave).close()
                 } catch (e: Exception) {
                     zipToSave.delete()
-                    throw BadRequestResponse("Module is not a valid zip file!")
+                    println("\tModule is not a valid zip file!")
                 }
 
                 Files.copy(File(oldFolder, "metadata.json").inputStream(), File(newFolder, METADATA_NAME).toPath())
@@ -71,7 +71,7 @@ fun main() {
             } catch (e: Exception) {
                 release.delete()
                 newFolder.deleteRecursively()
-                throw e
+                println("\tError creating module")
             }
 
         }
