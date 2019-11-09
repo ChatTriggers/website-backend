@@ -16,7 +16,7 @@ fun getReleaseForModVersion(module: Module, modVersionString: String) = transact
     allReleases.map { it to it.modVersion.toVersion() }
         .sortedByDescending { it.second }
         .filter { it.second.majorVersion == modVersion.majorVersion }
-        .firstOrNull { modVersion > it.second }
+        .firstOrNull { modVersion >= it.second }
         ?.first
 }
 
