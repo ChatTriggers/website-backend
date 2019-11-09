@@ -55,6 +55,7 @@ fun main(args: Array<String>) {
 
         it.addStaticFiles("static/home/", Location.EXTERNAL)
         it.addStaticFiles("static/frontend/", Location.EXTERNAL)
+        it.addStaticFiles("assets", Location.CLASSPATH)
         it.addSinglePageRoot("/modules", "static/frontend/app.html", Location.EXTERNAL)
     }.start(if (production) 80 else 7000)
 

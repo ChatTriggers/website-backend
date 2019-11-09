@@ -25,8 +25,16 @@ fun makeCompatRoutes(app: Javalin) {
             get("metadata/:module-name", ::handleOldMetadata)
             get("scripts/:module-name", ::handleOldScripts)
         }
-        get("tracker") {
-            it.status(200)
+        path("tracker") {
+            get("special.json") {
+                it.status(200).json(object {
+                    val supporters: List<String> = listOf()
+                    val developers: List<String> = listOf()
+                })
+            }
+            get {
+                it.status(200)
+            }
         }
         path("versions") {
             get("latest") {
