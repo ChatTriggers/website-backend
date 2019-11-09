@@ -23,7 +23,7 @@ fun moduleRoutes() {
     // Instead, it gets to pass the module's name and its current mod version,
     // and the server handles all of the hard work finding the correct release version.
     get("modules/:module-name/metadata", ::getMetadata)
-    get("module/:module-name/scripts", ::getScripts)
+    get("modules/:module-name/scripts", ::getScripts)
 }
 
 fun getMetadata(ctx: Context) {
