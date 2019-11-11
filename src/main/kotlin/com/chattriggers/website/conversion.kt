@@ -28,10 +28,12 @@ fun main() {
 
     voidTransaction {
         Module.all().forEach {
-            it.releases.forEach { release ->
+            it.releases.filter { release ->
+                release.modVersion == "0.18.4" && release.releaseVersion == "1.0.0"
+            }.forEach { release ->
                 release.changelog = "**Initial Release**\n\n" +
-                    "_Note: This release was automatically created from the pre-existing script files, and was assumed " +
-                    "to be for mod version 0.18.4._"
+                    "_Note: This release was automatically created from the pre-existing\n" +
+                    "script files, and was assumed to be for mod version 0.18.4._"
             }
 
 //            println("Create release for ${it.name}")
