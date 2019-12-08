@@ -38,9 +38,9 @@ fun getMetadata(ctx: Context) {
 }
 
 fun getScripts(ctx: Context) {
-    val releaseFolder = getReleaseFolder(ctx,
-        modVersion = ctx.queryParam("modVersion")
-            ?: throw BadRequestResponse("Missing 'modVersion' query parameter."),
+    val releaseFolder = getReleaseFolder(
+        ctx,
+        modVersion = ctx.queryParam("modVersion") ?: throw BadRequestResponse("Missing 'modVersion' query parameter."),
         incrementDownloads = true
     ) ?: throw NotFoundResponse("No release applicable for specified mod version.")
 

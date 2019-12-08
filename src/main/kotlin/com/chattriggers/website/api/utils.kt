@@ -59,7 +59,6 @@ fun UploadedFile.saveModuleToFolder(folder: File) {
     } catch (e: Exception) {
         zipToSave.delete()
         metadataToSave.delete()
-        e.printStackTrace()
         throw BadRequestResponse("Module missing metadata.json!")
     }
 }

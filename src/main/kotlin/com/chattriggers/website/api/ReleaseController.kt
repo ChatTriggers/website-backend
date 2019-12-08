@@ -53,12 +53,6 @@ class ReleaseController : CrudHandler {
 
         val oldRelease = Release.find { Releases.modVersion eq modVersion }.firstOrNull()
 
-        if (oldRelease != null) {
-            val folder = File("storage/${module.name.toLowerCase()}/${oldRelease.id.value}")
-            folder.deleteRecursively()
-            oldRelease.delete()
-        }
-
         val release = Release.new {
             this.module = module
             this.releaseVersion = releaseVersion
@@ -73,9 +67,18 @@ class ReleaseController : CrudHandler {
         try {
             moduleFile.saveModuleToFolder(folder)
         } catch (e: Exception) {
+            println("Uploaded module zip folder was corrupted, deleting created release ${release.id}")
             release.delete()
             folder.deleteRecursively()
+            println("Finished deleting created release ${release.id}")
             throw e
+        }
+
+        if (oldRelease != null) {
+            println("Found old release ${oldRelease.id} on module ${module.name} on v${modVersion}, deleting. It has been replaced with ${release.id}")
+            File("storage/${module.name.toLowerCase()}/${oldRelease.id.value}").deleteRecursively()
+            oldRelease.delete()
+            println("Finished deleting old release ${oldRelease.id}")
         }
 
         ctx.status(201).json(release.public())
@@ -93,9 +96,12 @@ class ReleaseController : CrudHandler {
 
         val release = Release.findById(uuid) ?: throw NotFoundResponse("No release with specified release-id")
 
-        File("storage/${module.name.toLowerCase()}/${release.id.value}").deleteRecursively()
+        println("Deleting specific release ${release.id}")
 
+        File("storage/${module.name.toLowerCase()}/${release.id.value}").deleteRecursively()
         release.delete()
+
+        println("Finished deleting specific release ${release.id}")
     }
 
     /**
@@ -233,10 +239,14 @@ class ReleaseController : CrudHandler {
 
     companion object {
         fun deleteModule(module: Module) {
+            println("Deleting module ${module.name}'s releases.")
             module.releases.forEach {
-                File("storage/${module.name.toLowerCase()}/${it.id.value}").deleteRecursively()
+                println("Deleting release id ${it.id}")
 
+                File("storage/${module.name.toLowerCase()}/${it.id.value}").deleteRecursively()
                 it.delete()
+
+                println("Finished deleting release id ${it.id}")
             }
         }
     }
