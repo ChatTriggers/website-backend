@@ -36,22 +36,26 @@ class ReleaseController : CrudHandler {
 
         if (!validateVersion(releaseVersion)) throw BadRequestResponse("Malformed release version parameter. Must conform to the Semver spec.")
 
-        val existingRelease = Release.find {
-            (Releases.releaseVersion eq releaseVersion) and
-                    (Releases.module eq module.id)
-        }.firstOrNull()
-
-        if (existingRelease != null) throw BadRequestResponse("There already exists a release with version number $releaseVersion")
-
         val modVersion = formParamOrFail(ctx, "modVersion")
 
         if (modVersion !in allowedVersions) throw BadRequestResponse("The provided mod version does not exist.")
+
+        val existingRelease = Release.find {
+            (Releases.releaseVersion eq releaseVersion) and
+                    (Releases.module eq module.id) and
+                    (Releases.modVersion eq modVersion)
+        }.firstOrNull()
+
+        if (existingRelease != null) throw BadRequestResponse("There already exists a release with version number $releaseVersion")
 
         val changelog = ctx.formParam("changelog") ?: ""
 
         val moduleFile = ctx.uploadedFile("module") ?: throw BadRequestResponse("Missing module zip file")
 
-        val oldRelease = Release.find { Releases.modVersion eq modVersion }.firstOrNull()
+        val oldRelease = Release.find {
+            (Releases.modVersion eq modVersion) and
+                (Releases.module eq module.id)
+        }.firstOrNull()
 
         val release = Release.new {
             this.module = module
