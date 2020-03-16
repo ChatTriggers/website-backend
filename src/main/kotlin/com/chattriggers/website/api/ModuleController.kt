@@ -56,7 +56,10 @@ class ModuleController : CrudHandler {
                 updatedAt = DateTime.now()
             }
 
-            ctx.status(201).json(module.public())
+            val public = module.public()
+
+            ctx.status(201).json(public)
+            EventHandler.postEvent(Event.ModuleCreated(public))
         }
     }
 
@@ -73,6 +76,7 @@ class ModuleController : CrudHandler {
         module.delete()
 
         ctx.status(200).result("Successfully deleted module.")
+        EventHandler.postEvent(Event.ModuleDeleted(module.public()))
     }
 
     override fun getAll(ctx: Context) {

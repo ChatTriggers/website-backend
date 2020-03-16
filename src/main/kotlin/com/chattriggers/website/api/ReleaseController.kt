@@ -81,7 +81,10 @@ class ReleaseController : CrudHandler {
             oldRelease.delete()
         }
 
-        ctx.status(201).json(release.public())
+        val public = release.public()
+
+        ctx.status(201).json(public)
+        EventHandler.postEvent(Event.ReleaseCreated(public))
     }
 
     /**
