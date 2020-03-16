@@ -61,7 +61,7 @@ class ModuleController : CrudHandler {
 
             ctx.status(201).json(public)
 
-            if (!flagged)
+            if (!module.hidden)
                 EventHandler.postEvent(Event.ModuleCreated(public))
         }
     }
