@@ -7,7 +7,7 @@ import org.jetbrains.exposed.dao.IntIdTable
 
 object Modules : IntIdTable() {
     val owner = reference("user_id", Users)
-    val name = varchar("name", 20)
+    val name = varchar("name", 64)
     val description = text("description")
     val image = varchar("image", 50).nullable()
     val downloads = integer("downloads").default(0)
