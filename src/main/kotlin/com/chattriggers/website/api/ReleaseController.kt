@@ -170,7 +170,8 @@ class ReleaseController : CrudHandler {
      *  module: File?
      */
     override fun update(ctx: Context, resourceId: String) = voidTransaction {
-        val module = moduleOrFail(ctx)
+        // Ensure the module actually exists first...
+        moduleOrFail(ctx)
 
         if (!ctx.isMultipartFormData()
             && ctx.header(Header.CONTENT_TYPE)?.toLowerCase()?.contains("application/x-www-form-urlencoded") == false)
