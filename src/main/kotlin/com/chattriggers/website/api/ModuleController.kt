@@ -27,6 +27,7 @@ class ModuleController : CrudHandler {
      *  - tags: Array<String>
      *  - description: String
      *  - image: String?
+     *  - flagged: boolean?
      */
     override fun create(ctx: Context) {
         val currentUser = ctx.sessionAttribute<User>("user") ?: throw UnauthorizedResponse("Not logged in!")
@@ -51,7 +52,7 @@ class ModuleController : CrudHandler {
                 image = ctx.formParam("image")
                 downloads = 0
                 tags = givenTags.joinToString(separator = ",")
-                hidden = false
+                hidden = ctx.formParam("flagged")?.toBoolean() ?: false
                 createdAt = DateTime.now()
                 updatedAt = DateTime.now()
             }
@@ -59,7 +60,9 @@ class ModuleController : CrudHandler {
             val public = module.public()
 
             ctx.status(201).json(public)
-            EventHandler.postEvent(Event.ModuleCreated(public))
+
+            if (!flagged)
+                EventHandler.postEvent(Event.ModuleCreated(public))
         }
     }
 
@@ -76,7 +79,9 @@ class ModuleController : CrudHandler {
         module.delete()
 
         ctx.status(200).result("Successfully deleted module.")
-        EventHandler.postEvent(Event.ModuleDeleted(module.public()))
+
+        if (!module.hidden)
+            EventHandler.postEvent(Event.ModuleDeleted(module.public()))
     }
 
     override fun getAll(ctx: Context) {
@@ -182,7 +187,7 @@ class ModuleController : CrudHandler {
             when (it) {
                 "true" -> module.hidden = true
                 "false" -> module.hidden = false
-                else -> throw BadRequestResponse("'hidden' has to be a boolean")
+                else -> throw BadRequestResponse("'flagged' has to be a boolean")
             }
         }
 
