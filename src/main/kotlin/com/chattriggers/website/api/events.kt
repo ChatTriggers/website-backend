@@ -43,5 +43,5 @@ object EventHandler {
 sealed class Event(val type: String) {
     class ModuleCreated(val module: PublicModule) : Event("module_created")
     class ModuleDeleted(val module: PublicModule) : Event("module_deleted")
-    class ReleaseCreated(val release: PublicRelease): Event("release_created")
+    class ReleaseCreated(val module: PublicModule, val release: PublicRelease): Event("release_created")
 }
