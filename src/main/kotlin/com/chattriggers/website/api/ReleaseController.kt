@@ -38,7 +38,7 @@ class ReleaseController : CrudHandler {
 
         val modVersion = formParamOrFail(ctx, "modVersion")
 
-        if (modVersion !in allowedVersions) throw BadRequestResponse("The provided mod version does not exist.")
+        if (modVersion.toVersion() !in allowedVersions) throw BadRequestResponse("The provided mod version does not exist.")
 
         val existingRelease = Release.find {
             (Releases.releaseVersion eq releaseVersion) and

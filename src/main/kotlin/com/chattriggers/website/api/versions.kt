@@ -1,11 +1,11 @@
 package com.chattriggers.website.api
 
-import io.javalin.apibuilder.ApiBuilder
+import io.javalin.apibuilder.ApiBuilder.get
 import io.javalin.http.Context
 import java.io.File
 
 fun versionRoutes() {
-    ApiBuilder.get("versions", ::getVersions)
+    get("versions", ::getVersions)
 }
 
 const val VERSIONS_FILE = "versions.txt"
@@ -20,7 +20,9 @@ fun getVersions(ctx: Context) {
         lastVersionsCheckTime = System.currentTimeMillis()
     }
 
-    ctx.status(200).json(allowedVersions)
+    ctx.status(200).json(
+        allowedVersions.groupBy({ "${it.majorVersion}.${it.minorVersion}" }, { it.patchLevel.toString() })
+    )
 }
 
 private fun loadVersions() = File(VERSIONS_FILE)
@@ -28,5 +30,3 @@ private fun loadVersions() = File(VERSIONS_FILE)
     .split("\n")
     .filter { !it.isBlank() }
     .map { it.trim().toVersion() }
-    .sortedDescending()
-    .map { it.toString() }
