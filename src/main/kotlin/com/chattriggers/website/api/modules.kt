@@ -4,6 +4,7 @@ import com.chattriggers.website.data.Module
 import com.chattriggers.website.data.Modules
 import io.javalin.apibuilder.ApiBuilder.crud
 import io.javalin.apibuilder.ApiBuilder.get
+import io.javalin.core.util.Header
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import io.javalin.http.NotFoundResponse
@@ -46,7 +47,9 @@ fun getScripts(ctx: Context) {
 
     val file = File(releaseFolder, SCRIPTS_NAME)
 
-    ctx.status(200).contentType("application/zip").result(file.inputStream())
+    ctx.status(200)
+        .contentType("application/zip")
+        .result(file.inputStream())
 }
 
 fun getReleaseFolder(ctx: Context, modVersion: String, incrementDownloads: Boolean = false) = transaction {

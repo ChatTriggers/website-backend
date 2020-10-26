@@ -148,8 +148,8 @@ class ReleaseController : CrudHandler {
         class ReturnData(val file: File, val contentType: String, val filename: String)
 
         val data = when (ctx.queryParam("file")) {
-            "metadata" -> ReturnData(File(releaseFolder, METADATA_NAME), "application/json", "metadata.json")
-            "scripts" -> ReturnData(File(releaseFolder, SCRIPTS_NAME), "application/zip", "scripts.zip")
+            "metadata" -> ReturnData(File(releaseFolder, METADATA_NAME), "application/json", "{module.name}-${release.releaseVersion}-metadata.json")
+            "scripts" -> ReturnData(File(releaseFolder, SCRIPTS_NAME), "application/zip", "${module.name}-${release.releaseVersion}.zip")
             null -> { // file parameter not specified, assume the user wants the json
                 ctx.status(200).json(release.public())
                 return@voidTransaction
