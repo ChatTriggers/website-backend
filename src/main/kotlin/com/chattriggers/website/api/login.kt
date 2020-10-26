@@ -12,6 +12,7 @@ import io.javalin.http.Context
 import io.javalin.http.NotFoundResponse
 import io.javalin.http.UnauthorizedResponse
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
@@ -44,7 +45,7 @@ private fun login(ctx: Context) {
     val password = formParamOrFail(ctx, "password")
 
     val dbUser = transaction {
-        User.find { Users.name eq username }.firstOrNull()
+        User.find { (Users.name eq username) or (Users.email eq username) }.firstOrNull()
     } ?: throw UnauthorizedResponse("Authentication failed.")
 
     // Workaround for old php-era passwords. They changed the version number for no real reason.
