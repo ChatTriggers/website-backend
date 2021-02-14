@@ -99,12 +99,10 @@ class ReleaseController : CrudHandler, KoinComponent {
             throw e
         }
 
-        val public = release.public()
-
-        ctx.status(201).json(public)
+        ctx.status(201).json(release.authorized())
 
         if (!module.hidden && release.verified)
-            EventHandler.postEvent(Event.ReleaseCreated(module.public(), public))
+            EventHandler.postEvent(Event.ReleaseCreated(module.public(), release.public()))
 
         if (!release.verified) {
             val verificationUrl = "https://chattriggers.com/api/modules/${module.id}/releases/${release.id}/verify?verificationToken=$verificationToken"
