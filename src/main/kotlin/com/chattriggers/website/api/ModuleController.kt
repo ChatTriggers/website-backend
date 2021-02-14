@@ -140,7 +140,7 @@ class ModuleController : CrudHandler {
                 .limit(limit, offset)
 
             val moduleData =
-                if (access == Auth.Roles.default) modules.map(Module::public) else modules.map(Module::authorized)
+                if (access in Auth.trustedOrHigher()) modules.map(Module::authorized) else modules.map(Module::public)
 
             ModuleResponse(ModuleMeta(limit, offset, total), moduleData)
         }
@@ -160,7 +160,9 @@ class ModuleController : CrudHandler {
                 .firstOrNull() ?: throw BadRequestResponse("No module with specified resourceId")
         }
 
-        ctx.status(200).json(module.public())
+        val moduleData = if (access in Auth.trustedOrHigher() || module.owner == user) module.authorized() else module.public()
+
+        ctx.status(200).json(moduleData)
     }
 
     override fun update(ctx: Context, resourceId: String) = voidTransaction {
