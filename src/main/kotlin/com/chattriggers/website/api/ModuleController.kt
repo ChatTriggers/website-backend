@@ -74,7 +74,7 @@ class ModuleController : CrudHandler {
 
         if (module.owner != user && access == Auth.Roles.default) throw ForbiddenResponse("Can't delete this module.")
 
-        ReleaseController.deleteModule(module)
+        ReleaseController.deleteReleasesForModule(module)
 
         module.delete()
 

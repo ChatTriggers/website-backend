@@ -32,6 +32,12 @@ class User(id: EntityID<Int>) : IntEntity(id) {
         return other.name == this.name && other.email == this.email
     }
 
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + email.hashCode()
+        return result
+    }
+
     fun public() = PublicUser(id.value, name, rank)
 
     fun personal() = PersonalPublicUser(id.value, name, rank, email)

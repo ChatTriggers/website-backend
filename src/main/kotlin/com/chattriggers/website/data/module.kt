@@ -1,5 +1,6 @@
 package com.chattriggers.website.data
 
+import com.chattriggers.website.api.toVersion
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
@@ -38,8 +39,8 @@ class Module(id: EntityID<Int>) : IntEntity(id) {
         description,
         image,
         downloads,
-        tags.split(",").filter { !it.isBlank() },
-        releases.map(Release::public),
+        tags.split(",").filter { it.isNotBlank() },
+        releases.map(Release::authorized),
         hidden
     )
 
@@ -50,8 +51,8 @@ class Module(id: EntityID<Int>) : IntEntity(id) {
         description,
         image,
         downloads,
-        tags.split(",").filter { !it.isBlank() },
-        releases.map(Release::public)
+        tags.split(",").filter { it.isNotBlank() },
+        releases.filter { it.verified }.sortedByDescending { it.releaseVersion.toVersion() }.distinctBy { it.modVersion }.map(Release::public)
     )
 }
 

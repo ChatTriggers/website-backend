@@ -1,22 +1,30 @@
 package com.chattriggers.website.api
 
+import club.minnced.discord.webhook.WebhookClient
+import club.minnced.discord.webhook.send.WebhookEmbed
+import club.minnced.discord.webhook.send.WebhookEmbedBuilder
+import club.minnced.discord.webhook.send.WebhookMessageBuilder
 import com.chattriggers.website.Auth
+import com.chattriggers.website.config.DiscordConfig
 import com.chattriggers.website.data.Module
 import com.chattriggers.website.data.Release
 import com.chattriggers.website.data.Releases
 import com.chattriggers.website.data.User
 import io.javalin.apibuilder.CrudHandler
 import io.javalin.core.util.Header
-import io.javalin.http.BadRequestResponse
-import io.javalin.http.Context
-import io.javalin.http.NotFoundResponse
-import io.javalin.http.UnauthorizedResponse
+import io.javalin.http.*
+import org.jetbrains.exposed.dao.load
 import org.jetbrains.exposed.sql.and
 import org.joda.time.DateTime
+import org.koin.core.KoinComponent
+import org.koin.core.get
+import java.awt.Color
 import java.io.File
 import java.util.*
 
-class ReleaseController : CrudHandler {
+class ReleaseController : CrudHandler, KoinComponent {
+    val releaseWebhook = WebhookClient.withUrl(get<DiscordConfig>().webhookURL)
+
     /**
      * Create a new Release instance.
      *
@@ -28,7 +36,10 @@ class ReleaseController : CrudHandler {
      *  module: File
      */
     override fun create(ctx: Context) = voidTransaction {
-        val module = moduleOrFail(ctx)
+        val currentUser = ctx.sessionAttribute<User>("user") ?: throw UnauthorizedResponse("Not logged in!")
+        val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
+
+        val module = getModuleOrFail(ctx.pathParam("module-id"), currentUser, access)
 
         if (!ctx.isMultipartFormData()) throw BadRequestResponse("Must be multipart/form-data")
 
@@ -42,8 +53,8 @@ class ReleaseController : CrudHandler {
 
         val existingRelease = Release.find {
             (Releases.releaseVersion eq releaseVersion) and
-                    (Releases.module eq module.id) and
-                    (Releases.modVersion eq modVersion)
+                (Releases.module eq module.id) and
+                (Releases.modVersion eq modVersion)
         }.firstOrNull()
 
         if (existingRelease != null) throw BadRequestResponse("There already exists a release with version number $releaseVersion")
@@ -52,10 +63,7 @@ class ReleaseController : CrudHandler {
 
         val moduleFile = ctx.uploadedFile("module") ?: throw BadRequestResponse("Missing module zip file")
 
-        val oldRelease = Release.find {
-            (Releases.modVersion eq modVersion) and
-                (Releases.module eq module.id)
-        }.firstOrNull()
+        val verificationToken = UUID.randomUUID().toString()
 
         val release = Release.new {
             this.module = module
@@ -64,6 +72,13 @@ class ReleaseController : CrudHandler {
             this.changelog = changelog
             this.createdAt = DateTime.now()
             this.updatedAt = DateTime.now()
+            this.verified = false
+            this.verificationToken = verificationToken
+        }
+
+        if (access in Auth.trustedOrHigher()) {
+            release.verificationToken = null
+            release.verified = true
         }
 
         val folder = File("storage/${module.name.toLowerCase()}/${release.id.value}")
@@ -76,17 +91,36 @@ class ReleaseController : CrudHandler {
             throw e
         }
 
-        if (oldRelease != null) {
-            File("storage/${module.name.toLowerCase()}/${oldRelease.id.value}").deleteRecursively()
-            oldRelease.delete()
-        }
-
         val public = release.public()
 
         ctx.status(201).json(public)
 
-        if (!module.hidden)
+        if (!module.hidden && release.verified)
             EventHandler.postEvent(Event.ReleaseCreated(module.public(), public))
+
+        if (!release.verified) {
+            val verificationUrl = "https://chattriggers.com/api/modules/${module.id}/releases/${release.id}/verify?verificationToken=$verificationToken"
+            val embed = WebhookEmbedBuilder()
+                .setTitle(WebhookEmbed.EmbedTitle(
+                    "Release v${release.releaseVersion} for ${module.name} has been posted",
+                    "https://chattriggers.com/modules/v/${module.name}"
+                ))
+                .setDescription("Please verify this release is safe and non-malicious.\n" +
+                    "Click [here]($verificationUrl) to confirm verification.")
+                .setColor(Color(60, 197, 197).rgb)
+                .build()
+
+            val message = WebhookMessageBuilder()
+                .addEmbeds(embed)
+                .addFile("${module.name}-${release.releaseVersion}.zip", File(folder, SCRIPTS_NAME))
+                .build()
+
+            releaseWebhook.send(message).thenAccept { msg ->
+                voidTransaction {
+                    release.verificationMessage = msg.id
+                }
+            }
+        }
     }
 
     /**
@@ -96,10 +130,7 @@ class ReleaseController : CrudHandler {
      */
     override fun delete(ctx: Context, resourceId: String) = voidTransaction {
         val module = moduleOrFail(ctx)
-
-        val uuid = try { UUID.fromString(resourceId) } catch (e: Exception) { throw BadRequestResponse("release-id not a valid UUID.") }
-
-        val release = Release.findById(uuid) ?: throw NotFoundResponse("No release with specified release-id")
+        val release = releaseOrFail(resourceId)
 
         File("storage/${module.name.toLowerCase()}/${release.id.value}").deleteRecursively()
         release.delete()
@@ -115,8 +146,15 @@ class ReleaseController : CrudHandler {
         val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
 
         val module = getModuleOrFail(ctx.pathParam("module-id"), currentUser, access)
+        val authorized = access in Auth.trustedOrHigher() || currentUser == module.owner
 
-        ctx.status(200).json(module.releases.map(Release::public))
+        val releaseData = if (authorized) {
+            module.authorized()
+        } else {
+            module.public()
+        }
+
+        ctx.status(200).json(releaseData.releases)
     }
 
     /**
@@ -136,10 +174,11 @@ class ReleaseController : CrudHandler {
         val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
 
         val module = getModuleOrFail(ctx.pathParam("module-id"), currentUser, access)
+        val release = releaseOrFail(resourceId)
 
-        val uuid = try { UUID.fromString(resourceId) } catch (e: Exception) { throw BadRequestResponse("release-id not a valid UUID.") }
-
-        val release = Release.findById(uuid) ?: throw NotFoundResponse("No release with specified release-id")
+        val authorized = access in Auth.trustedOrHigher() || currentUser == module.owner
+        if (!authorized && !release.verified)
+            throw ForbiddenResponse("Module is unverified")
 
         val releaseFolder = File("storage/${module.name.toLowerCase()}/${release.id.value}")
 
@@ -148,8 +187,16 @@ class ReleaseController : CrudHandler {
         class ReturnData(val file: File, val contentType: String, val filename: String)
 
         val data = when (ctx.queryParam("file")) {
-            "metadata" -> ReturnData(File(releaseFolder, METADATA_NAME), "application/json", "{module.name}-${release.releaseVersion}-metadata.json")
-            "scripts" -> ReturnData(File(releaseFolder, SCRIPTS_NAME), "application/zip", "${module.name}-${release.releaseVersion}.zip")
+            "metadata" -> ReturnData(
+                File(releaseFolder, METADATA_NAME),
+                "application/json",
+                "{module.name}-${release.releaseVersion}-metadata.json"
+            )
+            "scripts" -> ReturnData(
+                File(releaseFolder, SCRIPTS_NAME),
+                "application/zip",
+                "${module.name}-${release.releaseVersion}.zip"
+            )
             null -> { // file parameter not specified, assume the user wants the json
                 ctx.status(200).json(release.public())
                 return@voidTransaction
@@ -176,10 +223,15 @@ class ReleaseController : CrudHandler {
         moduleOrFail(ctx)
 
         if (!ctx.isMultipartFormData()
-            && ctx.header(Header.CONTENT_TYPE)?.toLowerCase()?.contains("application/x-www-form-urlencoded") == false)
+            && ctx.header(Header.CONTENT_TYPE)?.toLowerCase()?.contains("application/x-www-form-urlencoded") == false
+        )
             throw BadRequestResponse("Must be multipart/form-data or application/x-www-form-urlencoded")
 
-        val uuid = try { UUID.fromString(resourceId) } catch (e: Exception) { throw BadRequestResponse("release-id not a valid UUID.") }
+        val uuid = try {
+            UUID.fromString(resourceId)
+        } catch (e: Exception) {
+            throw BadRequestResponse("release-id not a valid UUID.")
+        }
 
         val release = Release.findById(uuid) ?: throw NotFoundResponse("No release with specified release-id")
 
@@ -216,13 +268,60 @@ class ReleaseController : CrudHandler {
         ctx.status(200).json(release.public())
     }
 
+    /**
+     * Verifies a release to be safe and secure, making it public to everyone.
+     *
+     * GET /modules/:module-id/releases/:release-id/verify
+     * query parameters-
+     *  verificationToken: String
+     */
+    fun verify(ctx: Context) = voidTransaction {
+        // No authorization on if the module or release should be viewable by the currently logged in user,
+        // if there even is one, because if the request has the verification token, we don't care.
+        val release = releaseOrFail(ctx.pathParam("release-id"))
+
+        if (release.verified)
+            return@voidTransaction run { ctx.status(200) }
+
+        val verificationToken = ctx.queryParam("verificationToken")
+            ?: throw UnauthorizedResponse("verificationToken not provided")
+
+        if (verificationToken != release.verificationToken)
+            throw ForbiddenResponse("incorrect verificationToken")
+
+        release.verified = true
+        release.verificationToken = null
+
+        val module = release.module
+
+        release.verificationMessage?.let {
+            releaseWebhook.edit(it, "Release v${release.releaseVersion} for ${module.name} verified :)")
+            release.verificationMessage = null
+        }
+
+        if (!module.hidden)
+            EventHandler.postEvent(Event.ReleaseCreated(module.public(), release.public()))
+
+        ctx.status(200)
+    }
+
+    private fun releaseOrFail(releaseId: String): Release {
+        val uuid = try {
+            UUID.fromString(releaseId)
+        } catch (e: Exception) {
+            throw BadRequestResponse("release-id not a valid UUID.")
+        }
+
+        return Release.findById(uuid) ?: throw NotFoundResponse("No release with specified release-id")
+    }
+
     private fun moduleOrFail(ctx: Context): Module {
         val currentUser = ctx.sessionAttribute<User>("user") ?: throw UnauthorizedResponse("Not logged in!")
         val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
 
         val module = getModuleOrFail(ctx.pathParam("module-id"), currentUser, access)
 
-        if (access == Auth.Roles.default && module.owner != currentUser) throw UnauthorizedResponse("No permissions!")
+        if (access == Auth.Roles.default && module.owner != currentUser) throw ForbiddenResponse("No permissions!")
 
         return module
     }
@@ -233,14 +332,18 @@ class ReleaseController : CrudHandler {
         if (components.size != 3) return false
 
         for (component in components) {
-            try { component.toInt() } catch (e: NumberFormatException) { return false }
+            try {
+                component.toInt()
+            } catch (e: NumberFormatException) {
+                return false
+            }
         }
 
         return true
     }
 
     companion object {
-        fun deleteModule(module: Module) {
+        fun deleteReleasesForModule(module: Module) {
             module.releases.forEach {
                 File("storage/${module.name.toLowerCase()}/${it.id.value}").deleteRecursively()
                 it.delete()

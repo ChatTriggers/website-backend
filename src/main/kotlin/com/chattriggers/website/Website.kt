@@ -19,6 +19,7 @@ import java.io.File
 val configModule = module {
     single { Config.db }
     single { Config.mail }
+    single { Config.discord }
 }
 
 fun main(args: Array<String>) {

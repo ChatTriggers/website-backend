@@ -11,8 +11,6 @@ import org.koin.core.KoinComponent
 import org.koin.core.get
 import java.io.IOException
 
-
-
 object Emails : KoinComponent {
     private val emailConfig = get<MailConfig>()
     private val fromEmail = Email(emailConfig.fromEmail)

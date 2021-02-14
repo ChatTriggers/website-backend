@@ -8,6 +8,7 @@ object Config {
 
     val db: DbConfig
     val mail: MailConfig
+    val discord: DiscordConfig
 
     init {
         val file = File(".env.properties")
@@ -23,5 +24,15 @@ object Config {
             properties.getProperty("mail.apikey"),
             properties.getProperty("mail.from")
         )
+
+        discord = DiscordConfig(
+            properties.getProperty("discord.webhook")
+        )
     }
 }
+
+class DbConfig(val jdbcUrl: String, val username: String, val password: String)
+
+class MailConfig(val sendgridKey: String, val fromEmail: String)
+
+class DiscordConfig(val webhookURL: String)
