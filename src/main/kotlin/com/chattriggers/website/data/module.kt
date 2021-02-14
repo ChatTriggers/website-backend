@@ -40,7 +40,7 @@ class Module(id: EntityID<Int>) : IntEntity(id) {
         image,
         downloads,
         tags.split(",").filter { it.isNotBlank() },
-        releases.map(Release::authorized),
+        releases.sortedByDescending { it.releaseVersion.toVersion() }.map(Release::authorized),
         hidden
     )
 
