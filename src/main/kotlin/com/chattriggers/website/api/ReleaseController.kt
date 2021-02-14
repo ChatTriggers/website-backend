@@ -65,6 +65,14 @@ class ReleaseController : CrudHandler, KoinComponent {
 
         val verificationToken = UUID.randomUUID().toString()
 
+        Release.find {
+            (Releases.modVersion eq modVersion) and
+                (Releases.module eq module.id) and
+                (Releases.verified eq false)
+        }.forEach {
+            deleteRelease(it)
+        }
+
         val release = Release.new {
             this.module = module
             this.releaseVersion = releaseVersion
@@ -132,8 +140,7 @@ class ReleaseController : CrudHandler, KoinComponent {
         val module = moduleOrFail(ctx)
         val release = releaseOrFail(resourceId)
 
-        File("storage/${module.name.toLowerCase()}/${release.id.value}").deleteRecursively()
-        release.delete()
+        deleteRelease(release)
     }
 
     /**
@@ -295,7 +302,7 @@ class ReleaseController : CrudHandler, KoinComponent {
         val module = release.module
 
         release.verificationMessage?.let {
-            releaseWebhook.edit(it, "Release v${release.releaseVersion} for ${module.name} verified :)")
+            releaseWebhook.delete(it)
             release.verificationMessage = null
         }
 
@@ -340,6 +347,15 @@ class ReleaseController : CrudHandler, KoinComponent {
         }
 
         return true
+    }
+
+    private fun deleteRelease(release: Release) {
+        release.verificationMessage?.let {
+            releaseWebhook.delete(it)
+        }
+
+        File("storage/${release.module.name.toLowerCase()}/${release.id.value}").deleteRecursively()
+        release.delete()
     }
 
     companion object {
