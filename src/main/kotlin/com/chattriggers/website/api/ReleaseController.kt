@@ -10,6 +10,7 @@ import com.chattriggers.website.data.Module
 import com.chattriggers.website.data.Release
 import com.chattriggers.website.data.Releases
 import com.chattriggers.website.data.User
+import com.fasterxml.jackson.core.Version
 import io.javalin.apibuilder.CrudHandler
 import io.javalin.core.util.Header
 import io.javalin.http.*
@@ -105,7 +106,17 @@ class ReleaseController : CrudHandler, KoinComponent {
             EventHandler.postEvent(Event.ReleaseCreated(module.public(), release.public()))
 
         if (!release.verified) {
-            val verificationUrl = "https://chattriggers.com/api/modules/${module.id}/releases/${release.id}/verify?verificationToken=$verificationToken"
+            var verificationUrl = "https://chattriggers.com/modules/verify/${module.name}?token=$verificationToken&" +
+                "newReleaseId=${release.id}"
+
+            Release.find {
+                (Releases.modVersion eq modVersion) and
+                    (Releases.module eq module.id) and
+                    (Releases.verified eq true)
+            }.maxBy { it.releaseVersion.toVersion() }?.let {
+                verificationUrl += "&oldReleaseId=${it.id}"
+            }
+
             val embed = WebhookEmbedBuilder()
                 .setTitle(WebhookEmbed.EmbedTitle(
                     "Release v${release.releaseVersion} for ${module.name} has been posted",
@@ -116,12 +127,7 @@ class ReleaseController : CrudHandler, KoinComponent {
                 .setColor(Color(60, 197, 197).rgb)
                 .build()
 
-            val message = WebhookMessageBuilder()
-                .addEmbeds(embed)
-                .addFile("${module.name}-${release.releaseVersion}.zip", File(folder, SCRIPTS_NAME))
-                .build()
-
-            releaseWebhook.send(message).thenAccept { msg ->
+            releaseWebhook.send(embed).thenAccept { msg ->
                 voidTransaction {
                     release.verificationMessage = msg.id
                 }
