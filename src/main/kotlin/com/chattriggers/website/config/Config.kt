@@ -26,7 +26,8 @@ object Config {
         )
 
         discord = DiscordConfig(
-            properties.getProperty("discord.webhook")
+            properties.getProperty("discord.releaseWebhook"),
+            properties.getProperty("discord.modulesWebhook")
         )
     }
 }
@@ -35,4 +36,4 @@ class DbConfig(val jdbcUrl: String, val username: String, val password: String)
 
 class MailConfig(val sendgridKey: String, val fromEmail: String)
 
-class DiscordConfig(val webhookURL: String)
+class DiscordConfig(val releaseWebhookURL: String, val modulesWebhookURL: String)

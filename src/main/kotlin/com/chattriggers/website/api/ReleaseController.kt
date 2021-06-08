@@ -3,28 +3,25 @@ package com.chattriggers.website.api
 import club.minnced.discord.webhook.WebhookClient
 import club.minnced.discord.webhook.send.WebhookEmbed
 import club.minnced.discord.webhook.send.WebhookEmbedBuilder
-import club.minnced.discord.webhook.send.WebhookMessageBuilder
 import com.chattriggers.website.Auth
 import com.chattriggers.website.config.DiscordConfig
-import com.chattriggers.website.data.Module
-import com.chattriggers.website.data.Release
-import com.chattriggers.website.data.Releases
-import com.chattriggers.website.data.User
-import com.fasterxml.jackson.core.Version
+import com.chattriggers.website.data.*
 import io.javalin.apibuilder.CrudHandler
 import io.javalin.core.util.Header
 import io.javalin.http.*
-import org.jetbrains.exposed.dao.load
 import org.jetbrains.exposed.sql.and
 import org.joda.time.DateTime
 import org.koin.core.KoinComponent
 import org.koin.core.get
 import java.awt.Color
 import java.io.File
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.*
 
 class ReleaseController : CrudHandler, KoinComponent {
-    val releaseWebhook = WebhookClient.withUrl(get<DiscordConfig>().webhookURL)
+    private val releaseWebhook = WebhookClient.withUrl(get<DiscordConfig>().releaseWebhookURL)
+    private val modulesWebhook = WebhookClient.withUrl(get<DiscordConfig>().modulesWebhookURL)
 
     /**
      * Create a new Release instance.
@@ -103,27 +100,32 @@ class ReleaseController : CrudHandler, KoinComponent {
         ctx.status(201).json(release.authorized())
 
         if (!module.hidden && release.verified)
-            EventHandler.postEvent(Event.ReleaseCreated(module.public(), release.public()))
+            sendReleaseMessage(module.public(), release.public())
 
         if (!release.verified) {
-            var verificationUrl = "https://chattriggers.com/modules/verify/${module.name}?token=$verificationToken&" +
-                "newReleaseId=${release.id}"
+            var verificationUrl =
+                "https://chattriggers.com/modules/verify/${module.name}?token=$verificationToken&" +
+                        "newReleaseId=${release.id}"
 
             Release.find {
                 (Releases.modVersion eq modVersion) and
-                    (Releases.module eq module.id) and
-                    (Releases.verified eq true)
+                        (Releases.module eq module.id) and
+                        (Releases.verified eq true)
             }.maxBy { it.releaseVersion.toVersion() }?.let {
                 verificationUrl += "&oldReleaseId=${it.id}"
             }
 
             val embed = WebhookEmbedBuilder()
-                .setTitle(WebhookEmbed.EmbedTitle(
-                    "Release v${release.releaseVersion} for ${module.name} has been posted",
-                    "https://chattriggers.com/modules/v/${module.name}"
-                ))
-                .setDescription("Please verify this release is safe and non-malicious.\n" +
-                    "Click [here]($verificationUrl) to confirm verification.")
+                .setTitle(
+                    WebhookEmbed.EmbedTitle(
+                        "Release v${release.releaseVersion} for ${module.name} has been posted",
+                        "https://chattriggers.com/modules/v/${module.name}"
+                    )
+                )
+                .setDescription(
+                    "Please verify this release is safe and non-malicious.\n" +
+                            "Click [here]($verificationUrl) to confirm verification."
+                )
                 .setColor(Color(60, 197, 197).rgb)
                 .build()
 
@@ -311,9 +313,37 @@ class ReleaseController : CrudHandler, KoinComponent {
         }
 
         if (!module.hidden)
-            EventHandler.postEvent(Event.ReleaseCreated(module.public(), release.public()))
+            sendReleaseMessage(module.public(), release.public())
 
         ctx.status(200)
+    }
+
+    private fun sendReleaseMessage(module: PublicModule, release: PublicRelease) {
+        EventHandler.postEvent(Event.ReleaseCreated(module, release))
+        val embed = WebhookEmbedBuilder().apply {
+            setTitle(
+                WebhookEmbed.EmbedTitle(
+                    "Release created for module: ${module.name}",
+                    "https://www.chattriggers.com/modules/v/${module.name}"
+                )
+            )
+
+            addField(WebhookEmbed.EmbedField(true, "Author", module.owner.name))
+
+            if (release.releaseVersion.isNotEmpty())
+                addField(WebhookEmbed.EmbedField(true, "Release Version", release.releaseVersion))
+
+            if (release.modVersion.isNotEmpty())
+                addField(WebhookEmbed.EmbedField(true, "Mod Version", release.modVersion))
+
+            if (release.changelog.isNotEmpty())
+                addField(WebhookEmbed.EmbedField(false, "Changelog", release.changelog))
+
+            setColor(0x7b2fb5)
+            setTimestamp(ZonedDateTime.now(ZoneOffset.UTC))
+        }.build()
+
+        modulesWebhook.send(embed)
     }
 
     private fun releaseOrFail(releaseId: String): Release {

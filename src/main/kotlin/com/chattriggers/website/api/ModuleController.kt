@@ -1,8 +1,12 @@
 package com.chattriggers.website.api
 
+import club.minnced.discord.webhook.WebhookClient
+import club.minnced.discord.webhook.send.WebhookEmbed
+import club.minnced.discord.webhook.send.WebhookEmbedBuilder
 import com.chattriggers.website.Auth
 import com.chattriggers.website.api.responses.ModuleMeta
 import com.chattriggers.website.api.responses.ModuleResponse
+import com.chattriggers.website.config.DiscordConfig
 import com.chattriggers.website.data.Module
 import com.chattriggers.website.data.Modules
 import com.chattriggers.website.data.User
@@ -12,10 +16,15 @@ import io.javalin.http.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
+import org.koin.core.KoinComponent
+import org.koin.core.get
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
-class ModuleController : CrudHandler {
+class ModuleController : CrudHandler, KoinComponent {
     private val imgurRegex = """^https?:\/\/(\w+\.)?imgur.com\/[a-zA-Z0-9]{7}\.[a-zA-Z0-9]+$""".toRegex()
     private val nameRegex = """^\w{3,64}$""".toRegex()
+    private val modulesWebhook: WebhookClient = WebhookClient.withUrl(get<DiscordConfig>().modulesWebhookURL)
 
     /**
      * Creates a new Module. Does not instantiate any releases.
@@ -61,8 +70,34 @@ class ModuleController : CrudHandler {
 
             ctx.status(201).json(public)
 
-            if (!module.hidden)
+            if (!module.hidden) {
                 EventHandler.postEvent(Event.ModuleCreated(public))
+                val embed = WebhookEmbedBuilder().apply {
+                    setTitle(
+                        WebhookEmbed.EmbedTitle(
+                            "Module created: ${module.name}",
+                            "https://www.chattriggers.com/modules/v/${module.name}"
+                        )
+                    )
+
+                    addField(WebhookEmbed.EmbedField(true, "Author", module.owner.name))
+
+                    if (module.tags.isNotEmpty())
+                        addField(WebhookEmbed.EmbedField(true, "Tags", module.tags))
+
+                    if (module.description.isNotBlank())
+                        addField(WebhookEmbed.EmbedField(false, "Description", module.description))
+
+                    module.image?.let {
+                        if (it.isNotBlank())
+                            setImageUrl(it)
+                    }
+                    setColor(0x7b2fb5)
+                    setTimestamp(ZonedDateTime.now(ZoneOffset.UTC))
+                }.build()
+
+                modulesWebhook.send(embed)
+            }
         }
     }
 
@@ -80,8 +115,16 @@ class ModuleController : CrudHandler {
 
         ctx.status(200).result("Successfully deleted module.")
 
-        if (!module.hidden)
+        if (!module.hidden) {
             EventHandler.postEvent(Event.ModuleDeleted(module.public()))
+            val embed = WebhookEmbedBuilder()
+                .setTitle(WebhookEmbed.EmbedTitle("Module deleted: ${module.name}", null))
+                .setColor(0x7b2fb5)
+                .setTimestamp(ZonedDateTime.now(ZoneOffset.UTC))
+                .build()
+
+            modulesWebhook.send(embed)
+        }
     }
 
     override fun getAll(ctx: Context) {
