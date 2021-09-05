@@ -2,7 +2,7 @@ language: java
 jdk:
   - openjdk8
 before_install:
-  - curl -sS https://bootstrap.pypa.io/get-pip.py | sudo python3
+  - curl -sS https://bootstrap.pypa.io/pip/3.5/get-pip.py | sudo python3
   - sudo pip3 install paramiko
 script:
   - "./gradlew uberJar"
