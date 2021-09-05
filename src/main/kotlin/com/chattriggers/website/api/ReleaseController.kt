@@ -93,7 +93,7 @@ class ReleaseController : CrudHandler, KoinComponent {
         val folder = File("storage/${module.name.toLowerCase()}/${release.id.value}")
 
         try {
-            moduleFile.saveModuleToFolder(folder)
+            moduleFile.saveModuleToFolder(folder, release)
         } catch (e: Exception) {
             release.delete()
             folder.deleteRecursively()
