@@ -90,7 +90,7 @@ private fun new(ctx: Context) {
             name = newName
             email = newEmail
             password = BCrypt.hashpw(newPassword, BCrypt.gensalt())
-            rank = Auth.Roles.default
+            rank = Auth.Role.default
             createdAt = DateTime.now()
             updatedAt = DateTime.now()
         }

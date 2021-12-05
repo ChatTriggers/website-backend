@@ -4,7 +4,7 @@ import com.chattriggers.website.data.PublicModule
 import com.chattriggers.website.data.PublicRelease
 import io.javalin.apibuilder.ApiBuilder.ws
 import io.javalin.websocket.WsContext
-import io.javalin.websocket.WsHandler
+import io.javalin.websocket.WsConfig
 
 fun eventRoutes() {
     ws("events", EventHandler::configure)
@@ -13,7 +13,7 @@ fun eventRoutes() {
 object EventHandler {
     private val listeners = mutableListOf<WsContext>()
 
-    fun configure(handler: WsHandler) {
+    fun configure(handler: WsConfig) {
         handler.onConnect { ctx ->
             // The number 100 is arbitrary, can be modified as needed
             if (listeners.size > 100) {

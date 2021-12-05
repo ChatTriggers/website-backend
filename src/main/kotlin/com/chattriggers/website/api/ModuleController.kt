@@ -68,11 +68,11 @@ class ModuleController : CrudHandler {
 
     override fun delete(ctx: Context, resourceId: String) = voidTransaction {
         val user = ctx.sessionAttribute<User>("user")
-        val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
+        val access = ctx.sessionAttribute<Auth.Role>("role") ?: Auth.Role.default
 
         val module = getModuleOrFail(resourceId, user, access)
 
-        if (module.owner != user && access == Auth.Roles.default) throw ForbiddenResponse("Can't delete this module.")
+        if (module.owner != user && access == Auth.Role.default) throw ForbiddenResponse("Can't delete this module.")
 
         ReleaseController.deleteReleasesForModule(module)
 
@@ -85,20 +85,20 @@ class ModuleController : CrudHandler {
     }
 
     override fun getAll(ctx: Context) {
-        val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
+        val access = ctx.sessionAttribute<Auth.Role>("role") ?: Auth.Role.default
 
         val modulesResponse = transaction {
-            val limit = ctx.queryParam<Int>("limit", "10").get()
-            val offset = ctx.queryParam<Int>("offset", "0").get()
+            val limit = ctx.queryParamAsClass<Int>("limit").getOrDefault(10)
+            val offset = ctx.queryParamAsClass<Int>("offset").getOrDefault(0)
 
             var modifiers: Op<Boolean> = Op.TRUE
 
-            ctx.queryParam<Int>("owner").getOrNull()?.let {
+            ctx.queryParamAsClass<Int>("owner").allowNullable().get()?.let {
                 modifiers = modifiers and Op.build { Modules.owner eq it }
             }
 
-            ctx.queryParam<Boolean>("trusted").getOrNull()?.let {
-                modifiers = modifiers and Op.build { Users.rank neq Auth.Roles.default }
+            ctx.queryParamAsClass<Boolean>("trusted").allowNullable().get()?.let {
+                modifiers = modifiers and Op.build { Users.rank neq Auth.Role.default }
             }
 
             ctx.queryParam("tags")?.split(",")?.let { tags ->
@@ -117,8 +117,8 @@ class ModuleController : CrudHandler {
                 }
             }
 
-            if (access != Auth.Roles.default) {
-                ctx.queryParam<Boolean>("flagged").getOrNull()?.let {
+            if (access != Auth.Role.default) {
+                ctx.queryParamAsClass<Boolean>("flagged").allowNullable().get()?.let {
                     modifiers = modifiers and Op.build { Modules.hidden eq it }
                 }
             } else {
@@ -129,7 +129,7 @@ class ModuleController : CrudHandler {
 
             val total = preSorted.count()
 
-            val sortType = (ctx.queryParam("sort") ?: "DATE_CREATED_DESC").toUpperCase()
+            val sortType = (ctx.queryParam("sort") ?: "DATE_CREATED_DESC").uppercase()
             val sort = try {
                 SortType.valueOf(sortType).order
             } catch (e: Exception) {
@@ -150,7 +150,7 @@ class ModuleController : CrudHandler {
 
     override fun getOne(ctx: Context, resourceId: String) = voidTransaction {
         val user = ctx.sessionAttribute<User>("user")
-        val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
+        val access = ctx.sessionAttribute<Auth.Role>("role") ?: Auth.Role.default
 
         val module = try {
             Integer.parseInt(resourceId)
@@ -167,11 +167,11 @@ class ModuleController : CrudHandler {
 
     override fun update(ctx: Context, resourceId: String) = voidTransaction {
         val user = ctx.sessionAttribute<User>("user")
-        val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
+        val access = ctx.sessionAttribute<Auth.Role>("role") ?: Auth.Role.default
 
         val module = getModuleOrFail(resourceId, user, access)
 
-        if (module.owner != user && access == Auth.Roles.default) {
+        if (module.owner != user && access == Auth.Role.default) {
             throw ForbiddenResponse("Can't edit this module.")
         }
 
@@ -179,7 +179,7 @@ class ModuleController : CrudHandler {
             module.description = it
         }
 
-        ctx.formParam<String>("image").getOrNull()?.let {
+        ctx.formParamAsClass<String>("image").allowNullable().get()?.let {
             if (!it.matches(imgurRegex)) throw BadRequestResponse("'image' must be an imgur link.")
 
             module.image = it

@@ -8,8 +8,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 fun releaseRoutes() {
     val releaseController = ReleaseController()
-    crud("modules/:module-id/releases/:release-id", releaseController)
-    get("modules/:module-id/releases/:release-id/verify", releaseController::verify)
+    crud("modules/{module-id}/releases/{release-id}", releaseController)
+    get("modules/{module-id}/releases/{release-id}/verify", releaseController::verify)
 }
 
 fun getReleaseForModVersion(module: Module, modVersionString: String) = transaction {

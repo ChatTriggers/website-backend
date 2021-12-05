@@ -4,7 +4,6 @@ import com.chattriggers.website.Auth
 import com.chattriggers.website.data.Module
 import com.chattriggers.website.data.Release
 import com.chattriggers.website.data.User
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
@@ -19,17 +18,16 @@ import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
-import java.util.ArrayList
 import java.util.zip.ZipFile
 
 private val gson = GsonBuilder().setPrettyPrinting().create()
 
-fun getModuleOrFail(resourceId: String, user: User?, access: Auth.Roles): Module {
+fun getModuleOrFail(resourceId: String, user: User?, access: Auth.Role): Module {
     val moduleId = resourceId.toIntOrNull() ?: throw BadRequestResponse("Module ID must be an integer.")
 
     val module = Module.findById(moduleId)?.load(Module::owner) ?: throw NotFoundResponse("Module does not exist.")
 
-    if (module.hidden && access == Auth.Roles.default && module.owner != user) {
+    if (module.hidden && access == Auth.Role.default && module.owner != user) {
         throw NotFoundResponse("Module does not exist.")
     }
 
@@ -53,7 +51,7 @@ fun UploadedFile.saveModuleToFolder(folder: File, release: Release) {
     val metadataToSave = File(folder, METADATA_NAME)
 
     try {
-        FileSystems.newFileSystem(zipToSave.toPath(), null).use {
+        FileSystems.newFileSystem(zipToSave.toPath(), emptyMap<String, Any>(), null).use {
             val rootFolder = Files.newDirectoryStream(it.rootDirectories.first()).iterator()
 
             if (!rootFolder.hasNext()) throw Exception("Too small")

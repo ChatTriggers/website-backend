@@ -1,8 +1,7 @@
 package com.chattriggers.website
 
 import io.javalin.core.JavalinConfig
-import io.javalin.core.security.Role
-import io.javalin.core.security.SecurityUtil.roles
+import io.javalin.core.security.RouteRole
 import io.javalin.http.Context
 
 object Auth {
@@ -24,15 +23,16 @@ object Auth {
         }
     }
 
-    private fun getRoleForContext(ctx: Context): Roles {
-        return ctx.sessionAttribute<Roles>("role") ?: return Roles.default
+    private fun getRoleForContext(ctx: Context): Role {
+        return ctx.sessionAttribute<Role>("role") ?: return Role.default
     }
 
-    enum class Roles : Role {
+    @Suppress("EnumEntryName")
+    enum class Role : RouteRole {
         admin, trusted, default
     }
 
-    fun allRoles() = roles(Roles.default, Roles.trusted, Roles.admin)
-    fun trustedOrHigher() = roles(Roles.trusted, Roles.admin)
-    fun adminOnly() = roles(Roles.admin)
+    fun allRoles() = setOf(Role.default, Role.trusted, Role.admin)
+    fun trustedOrHigher() = setOf(Role.trusted, Role.admin)
+    fun adminOnly() = setOf(Role.admin)
 }

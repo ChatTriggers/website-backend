@@ -10,7 +10,7 @@ object Users : IntIdTable() {
     val name = varchar("name", length = 191)
     val email = varchar("email", length = 191)
     val password = varchar("password", length = 191)
-    val rank = enumerationByName("rank", 10, Auth.Roles::class)
+    val rank = enumerationByName("rank", 10, Auth.Role::class)
     val createdAt = datetime("created_at")
     val updatedAt = datetime("updated_at")
 }
@@ -43,6 +43,6 @@ class User(id: EntityID<Int>) : IntEntity(id) {
     fun personal() = PersonalPublicUser(id.value, name, rank, email)
 }
 
-data class PublicUser(val id: Int, val name: String, val rank: Auth.Roles)
+data class PublicUser(val id: Int, val name: String, val rank: Auth.Role)
 
-data class PersonalPublicUser(val id: Int, val name: String, val rank: Auth.Roles, val email: String)
+data class PersonalPublicUser(val id: Int, val name: String, val rank: Auth.Role, val email: String)

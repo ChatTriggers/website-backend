@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.3.41"
+    kotlin("jvm") version "1.6.0"
 }
 
 group = "com.chattriggers"
@@ -13,19 +13,18 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("io.javalin:javalin:3.3.0")
-    implementation("com.zaxxer:HikariCP:3.3.1")
-    implementation("org.koin:koin-core:2.0.1")
-    implementation("mysql:mysql-connector-java:8.0.17")
-    implementation("org.slf4j:slf4j-simple:1.7.26")
-    implementation("org.jetbrains.exposed:exposed:0.16.3")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.0")
+    implementation("io.javalin:javalin:4.1.1")
+    implementation("com.zaxxer:HikariCP:5.0.0")
+    implementation("io.insert-koin:koin-core:3.1.4")
+    implementation("mysql:mysql-connector-java:8.0.25")
+    implementation("org.slf4j:slf4j-simple:1.7.32")
+    implementation("org.jetbrains.exposed:exposed:0.17.14")
     implementation("org.mindrot:jbcrypt:0.4")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.9.9")
-    implementation("com.sendgrid:sendgrid-java:4.4.1")
-    implementation("com.overzealous:remark:1.1.0")
-    implementation("club.minnced:discord-webhooks:0.5.4")
-    implementation("com.google.code.gson:gson:2.8.8")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.0")
+    implementation("com.sendgrid:sendgrid-java:4.8.0")
+    implementation("club.minnced:discord-webhooks:0.7.2")
+    implementation("com.google.code.gson:gson:2.8.9")
 }
 
 tasks.withType<KotlinCompile> {

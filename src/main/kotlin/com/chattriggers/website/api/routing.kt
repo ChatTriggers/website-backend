@@ -24,8 +24,8 @@ fun makeApiRoutes(app: Javalin) {
 fun makeCompatRoutes(app: Javalin) {
     app.routes {
         path("downloads") {
-            get("metadata/:module-name", ::handleOldMetadata)
-            get("scripts/:module-name", ::handleOldScripts)
+            get("metadata/{module-name}", ::handleOldMetadata)
+            get("scripts/{module-name}", ::handleOldScripts)
         }
         path("tracker") {
             get("special.json") {

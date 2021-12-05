@@ -17,14 +17,14 @@ const val METADATA_NAME = "metadata.json"
 const val SCRIPTS_NAME = "scripts.zip"
 
 fun moduleRoutes() {
-    crud("modules/:module-id", ModuleController())
+    crud("modules/{module-id}", ModuleController())
 
     // Essentially stuff to be used by the mod. The mod has no knowledge of module-id's,
     // releases, etc.
     // Instead, it gets to pass the module's name and its current mod version,
     // and the server handles all of the hard work finding the correct release version.
-    get("modules/:module-name/metadata", ::getMetadata)
-    get("modules/:module-name/scripts", ::getScripts)
+    get("modules/{module-name}/metadata", ::getMetadata)
+    get("modules/{module-name}/scripts", ::getScripts)
 }
 
 fun getMetadata(ctx: Context) {
@@ -53,7 +53,7 @@ fun getScripts(ctx: Context) {
 }
 
 fun getReleaseFolder(ctx: Context, modVersion: String, incrementDownloads: Boolean = false) = transaction {
-    val moduleName = ctx.pathParam("module-name").toLowerCase()
+    val moduleName = ctx.pathParam("module-name").lowercase()
 
     val module = Module.find { Modules.name.lowerCase() eq moduleName }
         .firstOrNull() ?: throw NotFoundResponse("No module with that module-name")

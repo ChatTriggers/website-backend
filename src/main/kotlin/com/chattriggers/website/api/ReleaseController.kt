@@ -3,22 +3,19 @@ package com.chattriggers.website.api
 import club.minnced.discord.webhook.WebhookClient
 import club.minnced.discord.webhook.send.WebhookEmbed
 import club.minnced.discord.webhook.send.WebhookEmbedBuilder
-import club.minnced.discord.webhook.send.WebhookMessageBuilder
 import com.chattriggers.website.Auth
 import com.chattriggers.website.config.DiscordConfig
 import com.chattriggers.website.data.Module
 import com.chattriggers.website.data.Release
 import com.chattriggers.website.data.Releases
 import com.chattriggers.website.data.User
-import com.fasterxml.jackson.core.Version
 import io.javalin.apibuilder.CrudHandler
 import io.javalin.core.util.Header
 import io.javalin.http.*
-import org.jetbrains.exposed.dao.load
 import org.jetbrains.exposed.sql.and
 import org.joda.time.DateTime
-import org.koin.core.KoinComponent
-import org.koin.core.get
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import java.awt.Color
 import java.io.File
 import java.util.*
@@ -38,7 +35,7 @@ class ReleaseController : CrudHandler, KoinComponent {
      */
     override fun create(ctx: Context) = voidTransaction {
         val currentUser = ctx.sessionAttribute<User>("user") ?: throw UnauthorizedResponse("Not logged in!")
-        val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
+        val access = ctx.sessionAttribute<Auth.Role>("role") ?: Auth.Role.default
 
         val module = getModuleOrFail(ctx.pathParam("module-id"), currentUser, access)
 
@@ -90,7 +87,7 @@ class ReleaseController : CrudHandler, KoinComponent {
             release.verified = true
         }
 
-        val folder = File("storage/${module.name.toLowerCase()}/${release.id.value}")
+        val folder = File("storage/${module.name.lowercase()}/${release.id.value}")
 
         try {
             moduleFile.saveModuleToFolder(folder, release)
@@ -113,7 +110,7 @@ class ReleaseController : CrudHandler, KoinComponent {
                 (Releases.modVersion eq modVersion) and
                     (Releases.module eq module.id) and
                     (Releases.verified eq true)
-            }.maxBy { it.releaseVersion.toVersion() }?.let {
+            }.maxByOrNull { it.releaseVersion.toVersion() }?.let {
                 verificationUrl += "&oldReleaseId=${it.id}"
             }
 
@@ -154,7 +151,7 @@ class ReleaseController : CrudHandler, KoinComponent {
      */
     override fun getAll(ctx: Context) = voidTransaction {
         val currentUser = ctx.sessionAttribute<User>("user")
-        val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
+        val access = ctx.sessionAttribute<Auth.Role>("role") ?: Auth.Role.default
 
         val module = getModuleOrFail(ctx.pathParam("module-id"), currentUser, access)
         val authorized = access in Auth.trustedOrHigher() || currentUser == module.owner
@@ -182,7 +179,7 @@ class ReleaseController : CrudHandler, KoinComponent {
      */
     override fun getOne(ctx: Context, resourceId: String) = voidTransaction {
         val currentUser = ctx.sessionAttribute<User>("user")
-        val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
+        val access = ctx.sessionAttribute<Auth.Role>("role") ?: Auth.Role.default
 
         val module = getModuleOrFail(ctx.pathParam("module-id"), currentUser, access)
         val release = releaseOrFail(resourceId)
@@ -191,7 +188,7 @@ class ReleaseController : CrudHandler, KoinComponent {
         if (!authorized && !release.verified)
             throw ForbiddenResponse("Module is unverified")
 
-        val releaseFolder = File("storage/${module.name.toLowerCase()}/${release.id.value}")
+        val releaseFolder = File("storage/${module.name.lowercase()}/${release.id.value}")
 
         if (!releaseFolder.exists()) throw NotFoundResponse("No release folder found.")
 
@@ -234,7 +231,7 @@ class ReleaseController : CrudHandler, KoinComponent {
         moduleOrFail(ctx)
 
         if (!ctx.isMultipartFormData()
-            && ctx.header(Header.CONTENT_TYPE)?.toLowerCase()?.contains("application/x-www-form-urlencoded") == false
+            && ctx.header(Header.CONTENT_TYPE)?.lowercase()?.contains("application/x-www-form-urlencoded") == false
         )
             throw BadRequestResponse("Must be multipart/form-data or application/x-www-form-urlencoded")
 
@@ -259,8 +256,8 @@ class ReleaseController : CrudHandler, KoinComponent {
 //        Instead, the user ought to make a new Release.
 
 //        ctx.uploadedFile("module")?.let {
-//            val folder = File("storage/${module.name.toLowerCase()}/${release.id.value}")
-//            val toCopy = File("storage/${module.name.toLowerCase()}/${release.id.value}-backup")
+//            val folder = File("storage/${module.name.lowercase()}/${release.id.value}")
+//            val toCopy = File("storage/${module.name.lowercase()}/${release.id.value}-backup")
 //
 //            folder.copyRecursively(toCopy)
 //
@@ -328,11 +325,11 @@ class ReleaseController : CrudHandler, KoinComponent {
 
     private fun moduleOrFail(ctx: Context): Module {
         val currentUser = ctx.sessionAttribute<User>("user") ?: throw UnauthorizedResponse("Not logged in!")
-        val access = ctx.sessionAttribute<Auth.Roles>("role") ?: Auth.Roles.default
+        val access = ctx.sessionAttribute<Auth.Role>("role") ?: Auth.Role.default
 
         val module = getModuleOrFail(ctx.pathParam("module-id"), currentUser, access)
 
-        if (access == Auth.Roles.default && module.owner != currentUser) throw ForbiddenResponse("No permissions!")
+        if (access == Auth.Role.default && module.owner != currentUser) throw ForbiddenResponse("No permissions!")
 
         return module
     }
@@ -358,14 +355,14 @@ class ReleaseController : CrudHandler, KoinComponent {
             releaseWebhook.delete(it)
         }
 
-        File("storage/${release.module.name.toLowerCase()}/${release.id.value}").deleteRecursively()
+        File("storage/${release.module.name.lowercase()}/${release.id.value}").deleteRecursively()
         release.delete()
     }
 
     companion object {
         fun deleteReleasesForModule(module: Module) {
             module.releases.forEach {
-                File("storage/${module.name.toLowerCase()}/${it.id.value}").deleteRecursively()
+                File("storage/${module.name.lowercase()}/${it.id.value}").deleteRecursively()
                 it.delete()
             }
         }
