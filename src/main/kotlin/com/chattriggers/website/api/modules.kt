@@ -4,7 +4,6 @@ import com.chattriggers.website.data.Module
 import com.chattriggers.website.data.Modules
 import io.javalin.apibuilder.ApiBuilder.crud
 import io.javalin.apibuilder.ApiBuilder.get
-import io.javalin.core.util.Header
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import io.javalin.http.NotFoundResponse

@@ -15,15 +15,14 @@ fun releaseRoutes() {
 fun getReleaseForModVersion(module: Module, modVersionString: String) = transaction {
     val modVersion = modVersionString.toVersion()
 
-    val allReleases = module.releases
+    module.releases
+        .asSequence()
         .filter { it.verified }
         .sortedByDescending { it.releaseVersion.toVersion() }
         .distinctBy { it.modVersion }
-
-    allReleases.map { it to it.modVersion.toVersion() }
+        .map { it to it.modVersion.toVersion() }
         .sortedByDescending { it.second }
-        .filter { it.second.majorVersion == modVersion.majorVersion }
-        .firstOrNull { modVersion >= it.second }
+        .firstOrNull { it.second.majorVersion <= modVersion.majorVersion }
         ?.first
 }
 
