@@ -27,9 +27,7 @@ class User(id: EntityID<Int>) : IntEntity(id) {
     val modules by Module referrersOn Modules.owner
 
     override fun equals(other: Any?): Boolean {
-        if (other == null || other !is User) return false
-
-        return other.name == this.name && other.email == this.email
+        return other is User && name == other.name && email == other.email
     }
 
     override fun hashCode(): Int {

@@ -15,6 +15,7 @@ fun makeApiRoutes(app: Javalin) {
             releaseRoutes()
             tagRoutes()
             versionRoutes()
+            trackingRoutes()
 
             eventRoutes()
         }

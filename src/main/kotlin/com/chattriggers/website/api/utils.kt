@@ -53,24 +53,21 @@ fun UploadedFile.saveModuleToFolder(folder: File, release: Release) {
     try {
         FileSystems.newFileSystem(zipToSave.toPath(), emptyMap<String, Any>(), null).use {
             val rootFolder = Files.newDirectoryStream(it.rootDirectories.first()).iterator()
-
             if (!rootFolder.hasNext()) throw Exception("Too small")
-
             val moduleFolder = rootFolder.next()
-
             if (rootFolder.hasNext()) throw Exception("Too big")
 
             Files.copy(
                 moduleFolder.resolve("metadata.json"),
                 metadataToSave.toPath(),
-                StandardCopyOption.REPLACE_EXISTING
+                StandardCopyOption.REPLACE_EXISTING,
             )
             normalizeMetadata(metadataToSave, release)
         }
     } catch (e: JsonSyntaxException) {
         zipToSave.delete()
         metadataToSave.delete()
-        throw BadRequestResponse("Malformed metadata.json file")
+        throw BadRequestResponse("Malformed metadata.json file: ${e.message}")
     } catch (e: Exception) {
         zipToSave.delete()
         metadataToSave.delete()
