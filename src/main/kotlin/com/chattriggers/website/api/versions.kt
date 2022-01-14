@@ -22,13 +22,7 @@ fun getVersions(ctx: Context) {
 
     val versions = allowedVersions.groupBy({ "${it.majorVersion}.${it.minorVersion}" }, { it.patchLevel.toString() })
 
-    val filteredVersions = if (ctx.userAgent() == "Mozilla/5.0") {
-        // This is a request from in-game, so don't show the 2.0 beta version.
-        // This can be removed once 2.0 is out of beta.
-        versions.filterKeys { !it.startsWith("2") }
-    } else versions
-
-    ctx.status(200).json(filteredVersions)
+    ctx.status(200).json(versions)
 }
 
 private fun loadVersions() = File(VERSIONS_FILE)
