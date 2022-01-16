@@ -22,7 +22,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed:0.17.14")
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.0")
-    implementation("com.sendgrid:sendgrid-java:4.8.0")
+    implementation("com.sendgrid:sendgrid-java:4.4.1")
     implementation("club.minnced:discord-webhooks:0.7.2")
     implementation("com.google.code.gson:gson:2.8.9")
 }
@@ -37,6 +37,8 @@ tasks.register<Jar>("uberJar") {
     manifest {
         attributes["Main-Class"] = "com.chattriggers.website.WebsiteKt"
     }
+
+    duplicatesStrategy = DuplicatesStrategy.WARN
 
     from(sourceSets.main.get().output)
 
