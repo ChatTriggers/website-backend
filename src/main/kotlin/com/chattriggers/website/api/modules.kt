@@ -21,24 +21,27 @@ fun moduleRoutes() {
     // Essentially stuff to be used by the mod. The mod has no knowledge of module-id's,
     // releases, etc.
     // Instead, it gets to pass the module's name and its current mod version,
-    // and the server handles all of the hard work finding the correct release version.
+    // and the server handles all the hard work finding the correct release version.
     get("modules/{module-name}/metadata", ::getMetadata)
     get("modules/{module-name}/scripts", ::getScripts)
 }
 
 fun getMetadata(ctx: Context) {
-    val releaseFolder = getReleaseFolder(ctx,
+    val (releaseFolder, modVersion) = getReleaseFolder(ctx,
         modVersion = ctx.queryParam("modVersion")
             ?: throw BadRequestResponse("Missing 'modVersion' query parameter.")
     ) ?: throw NotFoundResponse("No release applicable for specified mod version.")
 
     val file = File(releaseFolder, METADATA_NAME)
 
-    ctx.status(200).contentType("application/json").result(file.inputStream())
+    ctx.status(200)
+        .header("CT-Version", modVersion)
+        .contentType("application/json")
+        .result(file.inputStream())
 }
 
 fun getScripts(ctx: Context) {
-    val releaseFolder = getReleaseFolder(
+    val (releaseFolder, modVersion) = getReleaseFolder(
         ctx,
         modVersion = ctx.queryParam("modVersion") ?: throw BadRequestResponse("Missing 'modVersion' query parameter."),
         incrementDownloads = true
@@ -47,6 +50,7 @@ fun getScripts(ctx: Context) {
     val file = File(releaseFolder, SCRIPTS_NAME)
 
     ctx.status(200)
+        .header("CT-Version", modVersion)
         .contentType("application/zip")
         .result(file.inputStream())
 }
@@ -72,7 +76,7 @@ fun getReleaseFolder(ctx: Context, modVersion: String, incrementDownloads: Boole
             release.updatedAt = DateTime.now()
         }
 
-        return@transaction folder
+        return@transaction folder to release.modVersion
     } catch (e: Exception) {
         throw BadRequestResponse("Invalid query.")
     }
