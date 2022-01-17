@@ -2,6 +2,7 @@ package com.chattriggers.website.api
 
 import com.chattriggers.website.data.TrackedUser
 import com.chattriggers.website.data.TrackedUsers
+import com.fasterxml.jackson.core.Version
 import io.javalin.apibuilder.ApiBuilder.get
 import io.javalin.apibuilder.ApiBuilder.path
 import io.javalin.http.BadRequestResponse
@@ -22,10 +23,19 @@ private fun tracking(ctx: Context) {
     val hashBytes = Base64.getUrlDecoder().decode(hashQueryParam)
     val hash = String(hashBytes, Charsets.UTF_8)
 
+    // This was only added in 2.0.1, so if it doesn't exist, assume 2.0.0
+    val version = ctx.queryParam("version") ?: "2.0.0"
+
     transaction {
         val existingUser = TrackedUser.find(Op.build { TrackedUsers.hash eq hash })
-        if (existingUser.empty())
-            TrackedUser.new { this.hash = hash }
+        if (existingUser.empty()) {
+            TrackedUser.new {
+                this.hash = hash
+                this.version = version
+            }
+        } else {
+            existingUser.first().version = version
+        }
 
         ctx.status(200)
     }
