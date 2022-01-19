@@ -19,9 +19,7 @@ fun trackingRoutes() {
 }
 
 private fun tracking(ctx: Context) {
-    val hashQueryParam = ctx.queryParam("hash") ?: throw BadRequestResponse("Expected hash query parameter")
-    val hashBytes = Base64.getUrlDecoder().decode(hashQueryParam)
-    val hash = String(hashBytes, Charsets.UTF_8)
+    val hash = ctx.queryParam("hash") ?: throw BadRequestResponse("Expected hash query parameter")
 
     // This was only added in 2.0.1, so if it doesn't exist, assume 2.0.0
     val version = ctx.queryParam("version") ?: "2.0.0"
