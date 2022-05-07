@@ -82,6 +82,7 @@ fun normalizeMetadata(metadataFile: File, release: Release) {
     metadata.tags = release.module.tags.split(",").ifEmpty { null }
     metadata.pictureLink = release.module.image
     metadata.creator = release.module.owner.name
+    metadata.author = release.module.owner.name
     metadata.description = release.module.description
     metadataFile.writeText(gson.toJson(metadata))
 }
@@ -96,5 +97,6 @@ data class ModuleMetadata(
     var tags: List<String>? = null,
     var pictureLink: String? = null,
     var creator: String? = null,
+    var author: String? = null,
     var description: String? = null
 )
