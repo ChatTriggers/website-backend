@@ -3,10 +3,7 @@ package com.chattriggers.website.api
 import com.chattriggers.website.Auth
 import com.chattriggers.website.api.responses.ModuleMeta
 import com.chattriggers.website.api.responses.ModuleResponse
-import com.chattriggers.website.data.Module
-import com.chattriggers.website.data.Modules
-import com.chattriggers.website.data.User
-import com.chattriggers.website.data.Users
+import com.chattriggers.website.data.*
 import io.javalin.apibuilder.CrudHandler
 import io.javalin.http.*
 import org.jetbrains.exposed.sql.*
@@ -62,7 +59,7 @@ class ModuleController : CrudHandler {
             ctx.status(201).json(public)
 
             if (!module.hidden)
-                EventHandler.postEvent(Event.ModuleCreated(public))
+                Webhook.onModuleCreated(public)
         }
     }
 
@@ -81,7 +78,7 @@ class ModuleController : CrudHandler {
         ctx.status(200).result("Successfully deleted module.")
 
         if (!module.hidden)
-            EventHandler.postEvent(Event.ModuleDeleted(module.public()))
+            Webhook.onModuleDeleted(module.public())
     }
 
     override fun getAll(ctx: Context) {

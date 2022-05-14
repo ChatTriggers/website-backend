@@ -4,6 +4,7 @@ import com.chattriggers.website.api.makeApiRoutes
 import com.chattriggers.website.api.makeCompatRoutes
 import com.chattriggers.website.config.Config
 import com.chattriggers.website.data.DB
+import com.chattriggers.website.data.Webhook
 import io.javalin.Javalin
 import io.javalin.http.staticfiles.Location
 import org.eclipse.jetty.server.Connector
@@ -28,6 +29,7 @@ fun main(args: Array<String>) {
     }
 
     DB.setupDB()
+    Webhook.setupWebhook()
 
     val production = args.any { it == "--production" }
 

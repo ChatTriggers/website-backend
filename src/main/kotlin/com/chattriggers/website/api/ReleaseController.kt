@@ -5,10 +5,7 @@ import club.minnced.discord.webhook.send.WebhookEmbed
 import club.minnced.discord.webhook.send.WebhookEmbedBuilder
 import com.chattriggers.website.Auth
 import com.chattriggers.website.config.DiscordConfig
-import com.chattriggers.website.data.Module
-import com.chattriggers.website.data.Release
-import com.chattriggers.website.data.Releases
-import com.chattriggers.website.data.User
+import com.chattriggers.website.data.*
 import io.javalin.apibuilder.CrudHandler
 import io.javalin.core.util.Header
 import io.javalin.http.*
@@ -100,7 +97,7 @@ class ReleaseController : CrudHandler, KoinComponent {
         ctx.status(201).json(release.authorized())
 
         if (!module.hidden && release.verified)
-            EventHandler.postEvent(Event.ReleaseCreated(module.public(), release.public()))
+            Webhook.onReleaseCreated(module.public(), release.public())
 
         if (!release.verified) {
             var verificationUrl = "https://chattriggers.com/modules/verify/${module.name}?token=$verificationToken&" +
@@ -308,7 +305,7 @@ class ReleaseController : CrudHandler, KoinComponent {
         }
 
         if (!module.hidden)
-            EventHandler.postEvent(Event.ReleaseCreated(module.public(), release.public()))
+            Webhook.onReleaseCreated(module.public(), release.public())
 
         ctx.status(200)
     }

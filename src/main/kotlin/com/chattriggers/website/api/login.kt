@@ -52,6 +52,7 @@ private fun login(ctx: Context) {
     val hashedPw = dbUser.password.replace("$2y$", "$2a$")
 
     if (BCrypt.checkpw(password, hashedPw)) {
+        ctx.req.getSession(true)
         ctx.req.changeSessionId()
 
         // User correctly authenticated.
