@@ -18,7 +18,7 @@ object Webhook : KoinComponent {
     private lateinit var client: WebhookClient
 
     fun setupWebhook() {
-        client = WebhookClientBuilder(discordConfig.webhookURL).apply {
+        client = WebhookClientBuilder(discordConfig.modulesWebhook).apply {
             setDaemon(true)
             setAllowedMentions(AllowedMentions.none())
         }.build()

@@ -24,7 +24,6 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.1")
     implementation("com.sendgrid:sendgrid-java:4.4.1")
-    implementation("club.minnced:discord-webhooks:0.8.0")
     implementation("com.google.code.gson:gson:2.9.0")
 }
 

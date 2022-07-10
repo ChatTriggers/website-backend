@@ -18,7 +18,7 @@ import java.io.File
 import java.util.*
 
 class ReleaseController : CrudHandler, KoinComponent {
-    val releaseWebhook = WebhookClient.withUrl(get<DiscordConfig>().webhookURL)
+    val releaseWebhook = WebhookClient.withUrl(get<DiscordConfig>().verifyWebhook)
 
     /**
      * Create a new Release instance.
