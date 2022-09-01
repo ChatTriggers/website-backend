@@ -78,7 +78,7 @@ fun UploadedFile.saveModuleToFolder(folder: File, release: Release) {
 fun normalizeMetadata(metadataFile: File, release: Release) {
     val metadata = gson.fromJson<ModuleMetadata>(metadataFile.readText(), object : TypeToken<ModuleMetadata>() {}.type)
     metadata.name = release.module.name
-    metadata.version = release.releaseVersion
+    metadata.version = release.releaseVersion.toString()
     metadata.tags = release.module.tags.split(",").ifEmpty { null }
     metadata.pictureLink = release.module.image
     metadata.creator = release.module.owner.name
