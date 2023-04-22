@@ -104,9 +104,7 @@ class ReleaseController : CrudHandler, KoinComponent {
                 "newReleaseId=${release.id}"
 
             Release.find {
-                (Releases.modVersion eq modVersion) and
-                    (Releases.module eq module.id) and
-                    (Releases.verified eq true)
+                (Releases.module eq module.id) and (Releases.verified eq true)
             }.maxByOrNull { it.releaseVersion.toVersion() }?.let {
                 verificationUrl += "&oldReleaseId=${it.id}"
             }
