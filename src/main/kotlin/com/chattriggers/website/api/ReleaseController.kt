@@ -35,6 +35,7 @@ class ReleaseController : CrudHandler, KoinComponent {
         val access = ctx.sessionAttribute<Auth.Role>("role") ?: Auth.Role.default
 
         val module = getModuleOrFail(ctx.pathParam("module-id"), currentUser, access)
+        if (access == Auth.Role.default && module.owner != currentUser) throw ForbiddenResponse("No permissions!")
 
         if (!ctx.isMultipartFormData()) throw BadRequestResponse("Must be multipart/form-data")
 
