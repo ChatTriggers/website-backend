@@ -51,7 +51,7 @@ fun UploadedFile.saveModuleToFolder(folder: File, release: Release) {
     val metadataToSave = File(folder, METADATA_NAME)
 
     try {
-        FileSystems.newFileSystem(zipToSave.toURI(), emptyMap<String, Any>(), null).use {
+        FileSystems.newFileSystem(zipToSave.toPath(), emptyMap<String, Any>(), null).use {
             val rootFolder = Files.newDirectoryStream(it.rootDirectories.first()).iterator()
             if (!rootFolder.hasNext()) throw Exception("Too small")
             val moduleFolder = rootFolder.next()
