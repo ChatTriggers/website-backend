@@ -1,15 +1,17 @@
 package com.chattriggers.website.api
 
+import com.chattriggers.website.data.TrackedTimestamp
+import com.chattriggers.website.data.TrackedTimestamps
 import com.chattriggers.website.data.TrackedUser
 import com.chattriggers.website.data.TrackedUsers
-import com.fasterxml.jackson.core.Version
 import io.javalin.apibuilder.ApiBuilder.get
 import io.javalin.apibuilder.ApiBuilder.path
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.util.*
+import org.joda.time.DateTime
 
 fun trackingRoutes() {
     path("statistics") {
@@ -26,13 +28,28 @@ private fun tracking(ctx: Context) {
 
     transaction {
         val existingUser = TrackedUser.find(Op.build { TrackedUsers.hash eq hash })
-        if (existingUser.empty()) {
+        val user = if (existingUser.empty()) {
             TrackedUser.new {
                 this.hash = hash
                 this.version = version
             }
         } else {
-            existingUser.first().version = version
+            existingUser.first().also {
+                it.version = version
+            }
+        }
+
+        val time = DateTime.now()
+
+        val existingTimestamp = TrackedTimestamp.find {
+            (TrackedTimestamps.user eq user.id) and (TrackedTimestamps.time eq time)
+        }
+
+        if (existingTimestamp.empty()) {
+            TrackedTimestamp.new {
+                this.user = user
+                this.time = DateTime.now()
+            }
         }
 
         ctx.status(200)

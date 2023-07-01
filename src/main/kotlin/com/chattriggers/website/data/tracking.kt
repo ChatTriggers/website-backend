@@ -22,3 +22,15 @@ class TrackedUser(id: EntityID<Int>) : IntEntity(id) {
         return Objects.hash(hash, version)
     }
 }
+
+object TrackedTimestamps : IntIdTable() {
+    val user = reference("user", TrackedUsers)
+    val time = date("time")
+}
+
+class TrackedTimestamp(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<TrackedTimestamp>(TrackedTimestamps)
+
+    var user by TrackedUser referencedOn TrackedTimestamps.user
+    var time by TrackedTimestamps.time
+}
