@@ -1,5 +1,6 @@
 package com.chattriggers.website.api
 
+import com.fasterxml.jackson.core.Version
 import io.javalin.apibuilder.ApiBuilder.get
 import io.javalin.http.Context
 import java.io.File
@@ -20,7 +21,14 @@ fun getVersions(ctx: Context) {
         lastVersionsCheckTime = System.currentTimeMillis()
     }
 
-    val versions = allowedVersions.groupBy({ "${it.majorVersion}.${it.minorVersion}" }, { it.patchLevel.toString() })
+    val versions = allowedVersions.groupBy({
+        "${it.majorVersion}.${it.minorVersion}"
+    }, { version ->
+        val snapshot = if (version.isSnapshot) {
+            "-" + version.toString().substringAfter("-")
+        } else ""
+        version.patchLevel.toString() + snapshot
+    })
 
     ctx.status(200).json(versions)
 }

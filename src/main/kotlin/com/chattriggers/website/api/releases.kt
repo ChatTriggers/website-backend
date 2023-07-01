@@ -27,6 +27,10 @@ fun getReleaseForModVersion(module: Module, modVersionString: String) = transact
 }
 
 fun String.toVersion(): Version {
-    val split = this.split(".").map(String::toInt)
-    return Version(split[0], split[1], split[2], null, null, null)
+    val (semvar, extra) = if ('-' in this) {
+        split('-')
+    } else listOf(this, null)
+
+    val split = semvar!!.split(".").map(String::toInt)
+    return Version(split[0], split[1], split[2], extra, null, null)
 }
