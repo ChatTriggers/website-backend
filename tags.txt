@@ -10,5 +10,3 @@ API
 1.12
 Proof of Concept
 Hypixel
-Mineplex
-Hive
