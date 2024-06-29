@@ -83,6 +83,7 @@ class ModuleController : CrudHandler {
 
     override fun getAll(ctx: Context) {
         val access = ctx.sessionAttribute<Auth.Role>("role") ?: Auth.Role.default
+        val currentUser = ctx.sessionAttribute<User>("user")?.name
 
         val modulesResponse = transaction {
             val limit = ctx.queryParamAsClass<Int>("limit").getOrDefault(10)
@@ -119,7 +120,11 @@ class ModuleController : CrudHandler {
                     modifiers = modifiers and Op.build { Modules.hidden eq it }
                 }
             } else {
-                modifiers = modifiers and Op.build { Modules.hidden eq false }
+                modifiers = modifiers and Op.build {
+                    Modules.hidden eq false or (
+                        if (currentUser != null) Users.name eq currentUser else Op.FALSE
+                    )
+                }
             }
 
             val preSorted = Module.wrapRows(Modules.innerJoin(Users).slice(Modules.columns).select(modifiers))
