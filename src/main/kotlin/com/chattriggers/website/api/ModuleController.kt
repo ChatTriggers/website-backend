@@ -57,9 +57,6 @@ class ModuleController : CrudHandler {
             val public = module.public()
 
             ctx.status(201).json(public)
-
-            if (!module.hidden)
-                Webhook.onModuleCreated(public)
         }
     }
 
@@ -121,9 +118,12 @@ class ModuleController : CrudHandler {
                 }
             } else {
                 modifiers = modifiers and Op.build {
-                    Modules.hidden eq false or (
-                        if (currentUser != null) Users.name eq currentUser else Op.FALSE
-                    )
+                    ((Modules.hidden eq false) and exists(Releases.select(Releases.module eq Modules.id))).let {
+                        if (currentUser != null) {
+                            // Do not apply the hidden/releases requirement if the module belongs to the user
+                            (Users.name eq currentUser) or it
+                        } else it
+                    }
                 }
             }
 

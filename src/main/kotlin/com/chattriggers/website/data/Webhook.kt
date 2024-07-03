@@ -57,6 +57,11 @@ object Webhook : KoinComponent {
     }
 
     fun onReleaseCreated(module: PublicModule, release: PublicRelease) {
+        if (module.releases.size == 1) {
+            // The module created message is not sent until it has at least one release
+            onModuleCreated(module)
+        }
+
         sendMessage {
             setTitle(WebhookEmbed.EmbedTitle(
                 "Release created for module: ${module.name}",

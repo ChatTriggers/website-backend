@@ -27,7 +27,7 @@ fun getModuleOrFail(resourceId: String, user: User?, access: Auth.Role): Module 
 
     val module = Module.findById(moduleId)?.load(Module::owner) ?: throw NotFoundResponse("Module does not exist.")
 
-    if (module.hidden && access == Auth.Role.default && module.owner != user) {
+    if ((module.hidden || module.releases.empty()) && access == Auth.Role.default && module.owner != user) {
         throw NotFoundResponse("Module does not exist.")
     }
 
