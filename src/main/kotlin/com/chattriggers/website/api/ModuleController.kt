@@ -118,7 +118,9 @@ class ModuleController : CrudHandler {
                 }
             } else {
                 modifiers = modifiers and Op.build {
-                    ((Modules.hidden eq false) and exists(Releases.select(Releases.module eq Modules.id))).let {
+                    ((Modules.hidden eq false) and exists(
+                        Releases.select((Releases.module eq Modules.id) and (Releases.verified eq true)))
+                    ).let {
                         if (currentUser != null) {
                             // Do not apply the hidden/releases requirement if the module belongs to the user
                             (Users.name eq currentUser) or it
@@ -162,7 +164,8 @@ class ModuleController : CrudHandler {
                 .firstOrNull() ?: throw BadRequestResponse("No module with specified resourceId")
         }
 
-        val moduleData = if (access in Auth.trustedOrHigher() || module.owner == user) module.authorized() else module.public()
+        val moduleData =
+            if (access in Auth.trustedOrHigher() || module.owner == user) module.authorized() else module.public()
 
         ctx.status(200).json(moduleData)
     }
