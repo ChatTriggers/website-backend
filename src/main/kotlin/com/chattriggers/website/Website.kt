@@ -37,21 +37,7 @@ fun main(args: Array<String>) {
         Sessions.configure(it)
         Auth.configure(it)
 
-        if (production) {
-            it.enforceSsl = true
-
-            it.server {
-                val server = Server()
-                val sslConnector = ServerConnector(server, sslContextFactory())
-                sslConnector.port = 443
-                val connector = ServerConnector(server)
-                connector.port = 80
-                server.connectors = arrayOf<Connector>(sslConnector, connector)
-                server
-            }
-
-            it.compressionStrategy(null, null)
-        } else {
+        if (!production) {
             it.enableDevLogging()
             it.enableCorsForAllOrigins()
         }
@@ -64,11 +50,4 @@ fun main(args: Array<String>) {
 
     makeApiRoutes(app)
     makeCompatRoutes(app)
-}
-
-private fun sslContextFactory(): SslContextFactory {
-    val sslContextFactory = SslContextFactory.Server()
-    sslContextFactory.keyStorePath = File("/root/ssl/cert.jks").toString()
-    sslContextFactory.setKeyStorePassword(Config.properties.getProperty("cert.pass"))
-    return sslContextFactory
 }

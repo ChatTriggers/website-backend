@@ -1,35 +1,19 @@
 package com.chattriggers.website.config
 
-import java.io.File
-import java.util.*
-
 object Config {
-    val properties: Properties
-
-    val db: DbConfig
-    val mail: MailConfig
-    val discord: DiscordConfig
-
-    init {
-        val file = File(".env.properties")
-        properties = Properties().apply { load(file.inputStream()) }
-
-        db = DbConfig(
-            properties.getProperty("db.jdbcUrl"),
-            properties.getProperty("db.username"),
-            properties.getProperty("db.password")
-        )
-
-        mail = MailConfig(
-            properties.getProperty("mail.apikey"),
-            properties.getProperty("mail.from")
-        )
-
-        discord = DiscordConfig(
-            properties.getProperty("discord.verify_webhook"),
-            properties.getProperty("discord.modules_webhook"),
-        )
-    }
+    val db: DbConfig = DbConfig(
+        System.getenv("DATABASE_URL"),
+        System.getenv("DATABASE_USERNAME"),
+        System.getenv("DATABASE_PASSWORD"),
+    )
+    val mail: MailConfig = MailConfig(
+        System.getenv("MAIL_API_KEY"),
+        System.getenv("MAIL_FROM"),
+    )
+    val discord: DiscordConfig = DiscordConfig(
+        System.getenv("DISCORD_VERIFY_WEBHOOK"),
+        System.getenv("DISCORD_MODULES_WEBHOOK"),
+    )
 }
 
 class DbConfig(val jdbcUrl: String, val username: String, val password: String)
